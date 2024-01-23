@@ -21,7 +21,7 @@ In order to find such paths, we first need to load MPI module. I did:
 module load openMPI/4.1.5/gnu
 ```
 
-Then, we can find such paths by doing
+Then, we can find such paths by doing:
 
 ```bash
 which mpicc  #this returned /opt/programs/openMPI/4.1.5/bin/mpicc
