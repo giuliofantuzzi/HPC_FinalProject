@@ -1,1 +1,1 @@
-salloc -n256 -N2 -p EPYC --time=1:00:00 -A dssc
+salloc -n256 -N2 -p EPYC --time=02:00:00 -A dssc
