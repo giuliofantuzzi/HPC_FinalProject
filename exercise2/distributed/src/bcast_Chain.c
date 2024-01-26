@@ -13,14 +13,14 @@ void bcast_Chain(void* data,int count,MPI_Datatype datatype,int root,MPI_Comm co
   int tag=0; // I set the tag to 0 as default, but i think it could be any number
 
   if (world_rank == root){// If we are the root process, send our data to the next process
-    MPI_Send(data, count, datatype, world_rank+1, 0, communicator);
+    MPI_Send(data, count, datatype, (world_rank+1)%world_size, 0, communicator);
   }
   else if (world_rank == world_size-1){// If we are the last process, receive the data from the previous process
-    MPI_Recv(data, count, datatype, world_rank-1, 0, communicator, MPI_STATUS_IGNORE);
+    MPI_Recv(data, count, datatype, (world_rank-1)%world_siz, 0, communicator, MPI_STATUS_IGNORE);
   }
   else{// If we are a receiver process, receive the data from the previous process and send it to the next one
-    MPI_Recv(data, count, datatype, world_rank-1, 0, communicator, MPI_STATUS_IGNORE);
-    MPI_Send(data, count, datatype, world_rank+1, 0, communicator);
+    MPI_Recv(data, count, datatype, (world_rank-1)%world_siz, 0, communicator, MPI_STATUS_IGNORE);
+    MPI_Send(data, count, datatype, (world_rank+1)%world_siz, 0, communicator);
   }
 }
 //--------------------------------------------------------------------------------------
