@@ -13,7 +13,7 @@ srun mpicc $src -o $exe
 echo "Algorithm,Processes,AvgTime" > $out_csv
 
 # Loop over different numbers of processes
-for processes in {1..128..1}; do
+for processes in {2..128..1}; do
     echo "Benchmarking Flat Tree with np=$processes..."
     # Run the MPI program with mpirun and save the average time to the CSV file
     result=$(mpirun -np $processes $exe)

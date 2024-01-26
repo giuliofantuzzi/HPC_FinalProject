@@ -16,11 +16,11 @@ void bcast_Chain(void* data,int count,MPI_Datatype datatype,int root,MPI_Comm co
     MPI_Send(data, count, datatype, (world_rank+1)%world_size, 0, communicator);
   }
   else if (world_rank == world_size-1){// If we are the last process, receive the data from the previous process
-    MPI_Recv(data, count, datatype, (world_rank-1)%world_siz, 0, communicator, MPI_STATUS_IGNORE);
+    MPI_Recv(data, count, datatype, (world_rank-1)%world_size, 0, communicator, MPI_STATUS_IGNORE);
   }
   else{// If we are a receiver process, receive the data from the previous process and send it to the next one
-    MPI_Recv(data, count, datatype, (world_rank-1)%world_siz, 0, communicator, MPI_STATUS_IGNORE);
-    MPI_Send(data, count, datatype, (world_rank+1)%world_siz, 0, communicator);
+    MPI_Recv(data, count, datatype, (world_rank-1)%world_size, 0, communicator, MPI_STATUS_IGNORE);
+    MPI_Send(data, count, datatype, (world_rank+1)%world_size, 0, communicator);
   }
 }
 //--------------------------------------------------------------------------------------
