@@ -33,7 +33,7 @@ int main(int argc, char** argv){
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   int data = 42; 
-  int num_measurements = 100;  // Number of times to measure
+  int num_measurements = 1000;  // Number of times to measure
 
   double total_time = 0.0;
 
@@ -49,7 +49,7 @@ int main(int argc, char** argv){
     total_time += elapsed_time;
   }
 
-  double average_time = total_time / num_measurements;
+  double average_time = total_time / num_measurements * 1000000; // Time in microseconds
 
   if (world_rank == 0) {
       printf("%f\n", average_time);
