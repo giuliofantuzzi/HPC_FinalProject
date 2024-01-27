@@ -2,8 +2,8 @@
 # Remember to alloc a node!
 # Compile the C program
 src=src/bcast_Chain.c
-exe=exe/bcast_Chain_numa_core
-out_csv=results/bcast_Chain_numa_core.csv
+exe=exe/bcast_Chain_corecore
+out_csv=results/bcast_Chain_corecore.csv
 
 mkdir exe
 touch $out_csv
@@ -16,8 +16,8 @@ echo "Algorithm,Processes,AvgTime" > $out_csv
 for processes in {2..128..1}; do
     echo "Benchmarking Chain with np=$processes..."
     # Run the MPI program with mpirun and save the average time to the CSV file
-    result=$(mpirun -np $processes --map-by numa --rank-by core $exe)
-    echo "Chain,$processes,$result" >> $out_csv
+    result=$(mpirun -np $processes --map-by core --rank-by core --bind-to core $exe)
+    echo "Chain_corecore,$processes,$result" >> $out_csv
 done
 
 #Remove the executable directory
