@@ -16,7 +16,7 @@ echo "Algorithm,Processes,AvgTime" > $out_csv
 for processes in {2..128..1}; do
     echo "Benchmarking default MPI bcast with np=$processes..."
     # Run the MPI program with mpirun and save the average time to the CSV file
-    result=$(mpirun -np $processes $exe)
+    result=$(mpirun -np $processes --map-by core $exe)
     echo "Default,$processes,$result" >> $out_csv
 done
 
