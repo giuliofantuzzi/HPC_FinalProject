@@ -16,7 +16,7 @@ echo "Algorithm,Processes,AvgTime" > $out_csv
 for processes in {2..128..1}; do
     echo "Benchmarking Chain with np=$processes..."
     # Run the MPI program with mpirun and save the average time to the CSV file
-    result=$(mpirun -np $processes --map-by core $exe)
+    result=$(mpirun -np $processes --map-by core -x 1000 $exe)
     echo "Chain,$processes,$result" >> $out_csv
 done
 
