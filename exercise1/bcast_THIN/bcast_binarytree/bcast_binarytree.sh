@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=12
-#SBATCH --time=01:00:00
+#SBATCH --ntasks-per-node=24
+#SBATCH --time=02:00:00
 #SBATCH --partition=THIN
 #SBATCH --job-name=HPC_exam
 #SBATCH --exclusive
@@ -12,7 +12,7 @@ src_path="../../osu-micro-benchmarks-7.3-THIN/c/mpi/collective/blocking/"
 out_csv="../bcast_results/bcast_binarytree.csv"
 echo "Algorithm,Processes,AvgLatency(us),MinLatency,MaxLatency" >> $out_csv
 
-for np in {2..24..1}
+for np in {2..48..1}
 do
     # Construct the mpirun command with the current values of np and algorithm
     command="mpirun -np $np --map-by core --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_bcast_algorithm 5 ${src_path}osu_bcast -x 1000 -i 10000 -m 1:1 -f"

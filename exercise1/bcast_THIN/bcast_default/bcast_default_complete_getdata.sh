@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=2
-#SBATCH --ntasks-per-node=12
+#SBATCH --ntasks-per-node=24
 #SBATCH --time=02:00:00
 #SBATCH --partition=THIN
 #SBATCH --job-name=HPC_exam
@@ -10,7 +10,7 @@
 module load openMPI/4.1.5/gnu
 
 # Define the range of np values
-np_values="2 4 8 12 14 16 20 24"
+np_values="2 4 8 12 16 20 24 26 28 36 40 44 48"
 # Define the range of map values
 map_values="core socket node"
 
