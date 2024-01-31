@@ -5,6 +5,7 @@
 #SBATCH --partition=THIN
 #SBATCH --job-name=HPC_exam
 #SBATCH --exclusive
+#SBATCH --exclude=fat[001-002]
 
 # Load the openMPI module
 module load openMPI/4.1.5/gnu
