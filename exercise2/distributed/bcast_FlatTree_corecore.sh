@@ -9,9 +9,9 @@
 module load openMPI/4.1.5/gnu
 
 # Compile the C program
-src=src/bcast_Chain.c
-exe=exe/bcast_Chain_corecore
-out_csv=results/corecore/bcast_Chain_corecore.csv
+src=src/bcast_FlatTree.c
+exe=exe/bcast_FlatTree_corecore
+out_csv=results/corecore/bcast_FlatTree_corecore.csv
 
 mkdir exe
 touch $out_csv
