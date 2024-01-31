@@ -25,7 +25,7 @@ for processes in {2..36..1}; do
     echo "Benchmarking Chain with np=$processes..."
     # Run the MPI program with mpirun and save the average time to the CSV file
     result=$(mpirun -np $processes --map-by ppr:1:core:PE=1 --bind-to core $exe)
-    echo "Chain_corecore,$processes,$result" >> $out_csv
+    echo "FlatTree_corecore,$processes,$result" >> $out_csv
 done
 
 #Remove the executable directory
