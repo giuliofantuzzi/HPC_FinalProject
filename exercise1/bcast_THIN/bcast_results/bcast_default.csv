@@ -1,11 +1,4 @@
 Algorithm,Processes,AvgLatency(us),MinLatency,MaxLatency
-Default,2,0.23,0.13,0.33
-Default,3,0.49,0.11,0.78
-Default,4,0.32,0.18,0.42
-Default,5,0.40,0.17,0.47
-Default,6,0.53,0.20,0.70
-Default,7,0.59,0.19,0.77
-Algorithm,Processes,AvgLatency(us),MinLatency,MaxLatency
 Default,2,0.20,0.11,0.30
 Default,3,0.53,0.12,0.82
 Default,4,0.33,0.20,0.42
