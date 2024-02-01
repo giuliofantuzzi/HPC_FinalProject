@@ -1,0 +1,257 @@
+---
+title: "analysis"
+author: "Giulio Fantuzzi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+```
+
+# Table of contents
+- [Broadcast analysis](#broadcast-analysis)
+  - [ Fix algorithm and see how latency changes when allocation varies](#fix-algorithm-and-see-how-latency-changes-when-allocation-varies)
+    - [Bcast linear](#bcast-linear)
+    - [Bcast chain](#bcast-chain)
+  - [Fix map allocation and compare different algorithms](#fix-map-allocation-and-compare-different-algorithms)
+    - [Comparing Linear vs Chain](#comparing-linear-vs-chain)
+    - [Comparing all Bcast algorithms](#comparing-all-bcast-algorithms)
+  - [Fix algorithm and allocation and see how latency changes when message size varies](#fix-algorithm-and-allocation-and-see-how-latency-changes-when-message-size-varies)
+    - [Linear](#linear)
+    - [Chain](#chain)
+    - [BinaryTree](#binary-tree)
+  
+
+# Broadcast analysis
+
+First of all, import the datasets i obtained from *ORFEO*
+```{r}
+bcast_default.df<- read.csv(file = "bcast_default_all.csv")
+bcast_linear.df<- read.csv(file = "bcast_linear_all.csv")
+bcast_chain.df<- read.csv(file = "bcast_chain_all.csv")
+bcast_binarytree.df<- read.csv(file = "bcast_binarytree_all.csv")
+```
+
+Now we can bind them into a single df:
+```{r}
+bcast.df<- rbind(bcast_default.df,bcast_linear.df,bcast_chain.df,bcast_binarytree.df)
+```
+
+
+## Fix algorithm and see how latency changes when allocation varies
+
+### Bcast linear
+At the moment let's fix the size of the message to 2 `MPI_CHAR`
+```{r}
+bcast_linear.df %>% filter(MessageSize == 2) %>%
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+         color = 'Allocation')+
+    theme_light()
+```
+**Comments:**
+
+- As expected, both allocation by socket and core reveals some "jumps" when changing node, while allocation by node proceeds "linearly"
+- Regarding the jump when changing socket,
+- Something strange (I cannot explain it damn 🥲) is the position of the jumps...Why at 30 and not at 24? Isac suggested something about strange settings on external variables...if we were on EPYC we could suspect something about NUMA regions, but in thin nodes we have just 1 single numa, so it is not our case.
+
+### Bcast chain
+
+As we did above for linear broadcast, we fix the size of the message to 2 `MPI_CHAR`
+```{r}
+bcast_chain.df %>% filter(MessageSize == 2) %>%
+ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency',
+       title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+       color = 'Allocation')+
+  theme_light()
+```
+**Comments:**
+- same consideration as before
+
+## Fix map allocation and compare different algorithms
+
+### Comparing Linear vs Chain
+As for now, let's focus on the comparison between Linear vs Chain
+
+```{r}
+bcast.df %>% filter(MessageSize == 2)  %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Linear","Chain"))  %>%
+  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#E67E22","#3498DB")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+         color = 'Allocation')+
+    theme_light()
+```
+**Comments:**
+
+Remember that we are dealing with `--map-by core`
+
+- **Region 1 (<u>within socket</u>)**: chain and linear performs ~ the same--> this reveals that probaably the communication intra socket (so between cores in the same socket) is so fast that the implementation algorithm does not impact significantly
+
+- **Region 2 (<u>within node</u>)**: chain and linear still perform ~ the same--> maybe also the communication intra node (between cores, even if they are in different sockets) is too fast that the difference is not so evident. Anyway, there is a small difference that highlights chain having a smaller latency. Reasoning on the implementation of chain, it makes sense: both because chain work with contiguous core (while flat has more "core-jumps"), both because the paper stated that MPI chain sends the message dividing data into chunks (while flat is not able to do that)
+
+- **Region 3 (<u>outside node</u>)**: obviously in this region the latency is significantly higher (even if i cannot explain the position of the jump), and the difference between chain and linear algorithm is more evident. As explained before, this makes sense: chain works with contiguous cores, while flat tree sends from 0 to all other ranks!
+
+**BONUS**: in the plot above the difference between algorithms was not so evident, but this might derive from the small size of the message. Even if flat tree is less efficient than chain, the fact that we are sending a small message (2 *MPI_CHAR*) makes both the algorithms super fast.
+
+Recall that the choice of considering at first a small sized message was to exclude as much as possible the time needed for sending/storing the message and to focus as much as possible to the "pure" latency
+
+BUT, if we now increase the size of the message, the different performances of the 2 algorithms will be more evident:
+
+```{r,fig.width=16, fig.height=4}
+Plots=list()
+sizes=c(64,256,2048)
+for(i in 1:length(sizes)){
+  # Filter by current size
+  current_plot<- bcast.df %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Linear","Chain"))  %>% filter(MessageSize == sizes[i]) %>%
+                  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+                          geom_line(linetype = 1) +
+                          geom_point(size=1)+
+                          geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+                          annotate("text",x=c(12,24),y=c(0,0),label=c("12 Cores","24 cores"),vjust=0,hjust=-0.1,color="#616A6B")+
+                          scale_color_manual(values = c("#E67E22","#3498DB")) +
+                          xlim(2,48) +  # Adjust the x-axis limits as needed
+                          labs(x = 'N. of processes (#cores)',
+                               y = expression('Latency (µs)'),
+                               title = paste0("Broadcast Latency vs #cores (MessageSize =",sizes[i],")"),
+                               color = 'Allocation')+
+                          theme_light()
+  Plots[[i]]<- current_plot
+}
+
+Plots[[1]] | Plots[[2]] | Plots[[3]]
+```
+
+### Comparing all bcast algorithms
+Noticed that allocation by core is associated to the lowest latency, let's fix Allocation to *core* and compare the algorithm behind the MPI broadcast operation.
+
+Considering a message size = 2 MPI_CHAR we obtain:
+
+```{r,fig.width=8, fig.height=5}
+bcast.df %>% filter(MessageSize == 2)  %>% filter(Allocation == "core") %>%
+  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+         color = 'Allocation')+
+    theme_light()
+```
+
+Instead, if we let the size vary we get something similar as seen in [Linear vs Chain](#comparing-linear-vs-chain)
+```{r,fig.width=16, fig.height=4}
+Plots=list()
+sizes=c(64,256,2048)
+for(i in 1:length(sizes)){
+  # Filter by current size
+  current_plot<- bcast.df %>% filter(Allocation == "core") %>% filter(MessageSize == sizes[i]) %>%
+                    ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+                    geom_line(linetype = 1) +
+                    geom_point(size=1)+
+                    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+                    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+                    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD")) +
+                    xlim(2, 48) +  # Adjust the x-axis limits as needed
+                    labs(x = 'N. of processes (#cores)',
+                         y = expression('Latency (µs)'),
+                         title = paste0("Broadcast Latency vs #cores (MessageSize =",sizes[i],")"),
+                         color = 'Allocation')+
+                    theme_light()
+  Plots[[i]]<- current_plot
+}
+
+Plots[[1]] | Plots[[2]] | Plots[[3]]
+```
+
+
+## Fix algorithm and allocation and see how latency changes when message size varies
+
+### Linear
+
+```{r,fig.width=7, fig.height=4}
+bcast_linear.df %>%
+  filter(Allocation == "core") %>% filter(MessageSize %in% c(2,256,1024,2048,16384)) %>%
+  ggplot(aes(x = Processes, y = Latency, color = factor(MessageSize))) +
+  geom_line(linetype=1) +
+  geom_point() +
+  labs(
+    x = "Processes",
+    y = "Latency",
+    title = "Latency vs Processes for Linear algorithm (Allocation='core')",
+    color = "Message Size"
+  ) +
+  xlim(c(2,48))+
+  theme_light()
+```
+
+**Note** : i did NOT considered all the messaze sizes since the latency grows exponentially-like w.r.t message size. We will consider it better when building a model...
+
+### Chain
+
+```{r,fig.width=7, fig.height=4}
+bcast_chain.df %>%
+  filter(Allocation == "core") %>% filter(MessageSize %in% c(2,256,2048,4096,8192)) %>%
+  ggplot(aes(x = Processes, y = Latency, color = factor(MessageSize))) +
+  geom_line(linetype=1) +
+  geom_point(size=1) +
+  labs(
+    x = "Processes",
+    y = "Latency",
+    title = "Latency vs Processes for Chain algorithm (Allocation='core')",
+    color = "Message Size"
+  ) +
+  xlim(c(2,48))+
+  theme_light()
+```
+
+### Binary tree
+
+```{r,fig.width=7, fig.height=4}
+bcast_binarytree.df %>%
+  filter(Allocation == "core") %>% filter(MessageSize %in% c(2,256,2048,4096,8192)) %>%
+  ggplot(aes(x = Processes, y = Latency, color = factor(MessageSize))) +
+  geom_line(linetype=1) +
+  geom_point(size=1) +
+  labs(
+    x = "Processes",
+    y = "Latency",
+    title = "Latency vs Processes for BinaryTree algorithm (Allocation='core')",
+    color = "Message Size"
+  ) +
+  xlim(c(2,48))+
+  theme_light()
+```
+
+
