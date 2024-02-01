@@ -26,8 +26,8 @@ echo "Algorithm,Allocation,Processes,Latency" > $out_csv
 for map in $map_values; do
   for np in $np_values; do
     # Run the mpirun command
-    echo "...Benchmarking Linear Barrier with map=$map and np=$np..."
+    echo "...Benchmarking Default Barrier with map=$map and np=$np..."
     mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 0 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
-    | awk -v np="$np" '{printf "Default,%s,%s,%s\n",map,np,$1}' >> $out_csv
+    | awk -v map="$map" -v np="$np" '{printf "Default,%s,%s,%s\n",map,np,$1}' >> $out_csv
   done
 done

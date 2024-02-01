@@ -28,6 +28,6 @@ for map in $map_values; do
     # Run the mpirun command
     echo "...Benchmarking Double Ring Barrier with map=$map and np=$np..."
     mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 2 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
-    | awk -v np="$np" '{printf "DoubleRing,%s,%s,%s\n",map,np,$1}' >> $out_csv
+    | awk -v map="$map" -v np="$np" '{printf "DoubleRing,%s,%s,%s\n",map,np,$1}' >> $out_csv
   done
 done

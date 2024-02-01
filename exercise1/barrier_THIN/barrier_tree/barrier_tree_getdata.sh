@@ -17,7 +17,7 @@ map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../barrier_results/barrier_default.csv"
+out_csv="../barrier_results/barrier_tree.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,Latency" > $out_csv
@@ -28,6 +28,6 @@ for map in $map_values; do
     # Run the mpirun command
     echo "...Benchmarking Tree Barrier with map=$map and np=$np..."
     mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 6 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
-    | awk -v np="$np" '{printf "Tree,%s,%s,%s\n",map,np,$1}' >> $out_csv
+    | awk -v map="$map" -v np="$np" '{printf "Tree,%s,%s,%s\n",map,np,$1}' >> $out_csv
   done
 done
