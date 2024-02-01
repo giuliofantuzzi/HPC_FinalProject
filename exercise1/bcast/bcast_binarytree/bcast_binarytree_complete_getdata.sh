@@ -9,7 +9,7 @@
 module load openMPI/4.1.5/gnu
 
 # Define the range of np values
-np_values="2 4 8 16 32 64 128 256"
+np_values="2 4 8 16 32 64 128 192 256"
 # Define the range of map values
 map_values="core socket node"
 
