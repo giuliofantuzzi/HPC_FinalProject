@@ -11,6 +11,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyverse)
 library(patchwork)
+library(plotly)
 ```
 
 # Table of contents
@@ -18,6 +19,7 @@ library(patchwork)
   - [ Fix algorithm and see how latency changes when allocation varies](#fix-algorithm-and-see-how-latency-changes-when-allocation-varies)
     - [Bcast linear](#bcast-linear)
     - [Bcast chain](#bcast-chain)
+    - [Bcast binarytree](#bcast-binarytree)
   - [Fix map allocation and compare different algorithms](#fix-map-allocation-and-compare-different-algorithms)
     - [Comparing Linear vs Chain](#comparing-linear-vs-chain)
     - [Comparing all Bcast algorithms](#comparing-all-bcast-algorithms)
@@ -25,6 +27,7 @@ library(patchwork)
     - [Linear](#linear)
     - [Chain](#chain)
     - [BinaryTree](#binary-tree)
+  - [Performance models](#performance-models)
   
 
 # Broadcast analysis
@@ -58,7 +61,7 @@ bcast_linear.df %>% filter(MessageSize == 2) %>%
     xlim(2, 48) +  # Adjust the x-axis limits as needed
     labs(x = 'N. of processes (#cores)',
          y = 'Latency',
-         title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+         title = 'Linear Broadcast Latency vs #cores (MessageSize = 2)',
          color = 'Allocation')+
     theme_light()
 ```
@@ -82,13 +85,30 @@ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
   xlim(2, 48) +  # Adjust the x-axis limits as needed
   labs(x = 'N. of processes (#cores)',
        y = 'Latency',
-       title = 'Broadcast Latency vs #cores (MessageSize = 2)',
+       title = 'Chain Broadcast Latency vs #cores (MessageSize = 2)',
        color = 'Allocation')+
   theme_light()
 ```
 
 **Comments:**
 - same consideration as before
+
+### Bcast BinaryTree
+```{r}
+bcast_binarytree.df %>% filter(MessageSize == 2) %>%
+ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency',
+       title = 'BinaryTree Broadcast Latency vs #cores (MessageSize = 2)',
+       color = 'Allocation')+
+  theme_light()
+```
 
 ## Fix map allocation and compare different algorithms
 
@@ -157,7 +177,7 @@ Noticed that allocation by core is associated to the lowest latency, let's fix A
 
 Considering a message size = 2 MPI_CHAR we obtain:
 
-```{r,fig.width=8, fig.height=5}
+```{r,fig.width=7, fig.height=4}
 bcast.df %>% filter(MessageSize == 2)  %>% filter(Allocation == "core") %>%
   ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
     geom_line(linetype = 1) +
@@ -257,4 +277,95 @@ bcast_binarytree.df %>%
   theme_light()
 ```
 
+## Performance Models
 
+Now we fix allocation to *core*, as it was the more performant allocation for all the algorithms. Our aim is to fit a performance model able to predict latency basing on data
+
+**Disclaimer**: it might be biased from my statistical background, but I was not able to implement latency models explained in the paper...
+
+### Model for linear alg
+
+First of all, let's plot the variables to spot some relations:
+
+```{r}
+bcast_linear.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~MessageSize,
+    y = ~Processes,
+    z = ~Latency
+  )%>%
+  add_markers(
+    marker = list(color = ~Latency,
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency"),
+    title = "Latency vs Processes for BinaryTree algorithm (Allocation='core')"
+  )
+```
+
+We can implement a simple linear model (it makes sense to remove the intercept)
+```{r}
+fit.linear<- lm(formula= Latency ~ -1+MessageSize+Processes,
+                data=bcast_linear.df %>% filter(Allocation == "core")
+                )
+summary(fit.linear)
+```
+Let's give a marginal look at our response variable:
+```{r}
+hist(bcast_linear.df$Latency,breaks = 70,
+     xlab="Latency(us)",
+     main="Histogram of Latency (Linear Broadcast)")
+```
+
+EVIDENT SKEWNESS! Let's try to apply log2 transformation (in the model I will apply it both to Latency and MessageSize):
+
+```{r}
+bcast_linear.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~log2(MessageSize),
+    y = ~Processes,
+    z = ~log2(Latency)
+  )%>%
+  add_markers(
+    marker = list(color = ~log2(Latency),
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency"),
+    title = "Latency vs Processes for BinaryTree algorithm (Allocation='core')"
+  )
+```
+
+The linear model becomes:
+
+```{r}
+fit.linear.log<- lm(formula= log2(Latency) ~ -1+log2(MessageSize)+Processes,
+                data=bcast_linear.df %>% filter(Allocation == "core")
+                )
+summary(fit.linear.log)
+```
+**Comment:** $R^2_{adj}$ increases from 83,7% to 88,2% !!!
+
+### Model for chain alg
+
+Same considerations done above...
+
+```{r}
+fit.chain.log<- lm(formula= log2(Latency) ~ -1+log2(MessageSize)+Processes,
+                data=bcast_chain.df %>% filter(Allocation == "core")
+                )
+summary(fit.chain.log)
+```
+
+### Model for binarytree alg
+```{r}
+fit.binarytree.log<- lm(formula= log2(Latency) ~ -1+log2(MessageSize)+Processes,
+                data=bcast_binarytree.df %>% filter(Allocation == "core")
+                )
+summary(fit.binarytree.log)
+```
