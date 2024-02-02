@@ -31,10 +31,10 @@ library(patchwork)
 
 First of all, import the datasets i obtained from *ORFEO*
 ```{r}
-bcast_default.df<- read.csv(file = "bcast_default_all.csv")
-bcast_linear.df<- read.csv(file = "bcast_linear_all.csv")
-bcast_chain.df<- read.csv(file = "bcast_chain_all.csv")
-bcast_binarytree.df<- read.csv(file = "bcast_binarytree_all.csv")
+bcast_default.df<- read.csv(file = "bcast_default.csv")
+bcast_linear.df<- read.csv(file = "bcast_linear.csv")
+bcast_chain.df<- read.csv(file = "bcast_chain.csv")
+bcast_binarytree.df<- read.csv(file = "bcast_binarytree.csv")
 ```
 
 Now we can bind them into a single df:
@@ -65,7 +65,7 @@ bcast_linear.df %>% filter(MessageSize == 2) %>%
 **Comments:**
 
 - As expected, both allocation by socket and core reveals some "jumps" when changing node, while allocation by node proceeds "linearly"
-- Regarding the jump when changing socket,
+- Regarding the jump when changing socket, allocation by core reveals a jump, while allocation by socket proceeds linearly
 - Something strange (I cannot explain it damn 🥲) is the position of the jumps...Why at 30 and not at 24? Isac suggested something about strange settings on external variables...if we were on EPYC we could suspect something about NUMA regions, but in thin nodes we have just 1 single numa, so it is not our case.
 
 ### Bcast chain
@@ -86,6 +86,7 @@ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
        color = 'Allocation')+
   theme_light()
 ```
+
 **Comments:**
 - same consideration as before
 
@@ -114,6 +115,8 @@ bcast.df %>% filter(MessageSize == 2)  %>% filter(Allocation == "core") %>% filt
 Remember that we are dealing with `--map-by core`
 
 - **Region 1 (<u>within socket</u>)**: chain and linear performs ~ the same--> this reveals that probaably the communication intra socket (so between cores in the same socket) is so fast that the implementation algorithm does not impact significantly
+
+  <span style="color:red">NB: here it might be interesting to show point to point latency (since we are working on a short size message, so we are considering "pure" latency). And from this observation then we can move to the plots where i increase message size to show the difference in algorithms performance</span>
 
 - **Region 2 (<u>within node</u>)**: chain and linear still perform ~ the same--> maybe also the communication intra node (between cores, even if they are in different sockets) is too fast that the difference is not so evident. Anyway, there is a small difference that highlights chain having a smaller latency. Reasoning on the implementation of chain, it makes sense: both because chain work with contiguous core (while flat has more "core-jumps"), both because the paper stated that MPI chain sends the message dividing data into chunks (while flat is not able to do that)
 

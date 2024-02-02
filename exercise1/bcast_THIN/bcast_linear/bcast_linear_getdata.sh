@@ -16,8 +16,8 @@ np_values=$(seq 2 2 48)
 map_values="core socket node"
 
 # Define filepaths
-src_path="../../osu-micro-benchmarks-7.3-THIN/c/mpi/collective/blocking/"
-out_csv="../bcast_results_all/bcast_linear_all.csv"
+src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
+out_csv="../bcast_results/bcast_linear.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv

@@ -5,18 +5,19 @@
 #SBATCH --partition=THIN
 #SBATCH --job-name=HPC_exam
 #SBATCH --exclusive
-#
+#SBATCH --exclude=fat[001-002]
+
 # Load the openMPI module
 module load openMPI/4.1.5/gnu
 
 # Define the range of np values
-np_values="2 4 8 12 16 20 24 26 28 36 40 44 48"
+np_values=$(seq 2 2 48)
 # Define the range of map values
 map_values="core socket node"
 
 # Define filepaths
-src_path="../../osu-micro-benchmarks-7.3-THIN/c/mpi/collective/blocking/"
-out_csv="../bcast_results/bcast_binarytree_complete.csv"
+src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
+out_csv="../bcast_results/bcast_default.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv
@@ -25,8 +26,8 @@ echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv
 for map in $map_values; do
   for np in $np_values; do
     # Run the mpirun command
-    echo "...Benchmarking Binarytree with map=$map and np=$np..."
-    mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_bcast_algorithm 5 ${src_path}osu_bcast -x 1000 -i 10000 | tail -n 21 \
-    | awk -v np="$np" -v map="$map" '{printf "BinaryTree,%s,%s,%s,%s\n",map,np,$1, $2}' | sed 's/,$//' >> $out_csv
+    echo "...Benchmarking Default with map=$map and np=$np..."
+    mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_bcast_algorithm 0 ${src_path}osu_bcast -x 1000 -i 10000 | tail -n 21 \
+    | awk -v np="$np" -v map="$map" '{printf "Default,%s,%s,%s,%s\n",map,np,$1, $2}' | sed 's/,$//' >> $out_csv
   done
 done
