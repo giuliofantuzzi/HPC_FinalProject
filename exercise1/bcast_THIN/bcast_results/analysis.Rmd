@@ -324,6 +324,12 @@ hist(bcast_linear.df$Latency,breaks = 70,
 ```
 
 EVIDENT SKEWNESS! Let's try to apply log2 transformation (in the model I will apply it both to Latency and MessageSize):
+```{r}
+hist(log2(bcast_linear.df$Latency),breaks = 40,
+     xlab="log2(Latency(us))",
+     main="Histogram of log2 Latency (Linear Broadcast)")
+```
+
 
 ```{r}
 bcast_linear.df %>% 
