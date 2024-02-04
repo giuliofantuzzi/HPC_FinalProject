@@ -51,7 +51,7 @@ bcast.df<- rbind(bcast_default.df,bcast_linear.df,bcast_chain.df,bcast_binarytre
 ### Bcast linear
 At the moment let's fix the size of the message to 2 `MPI_CHAR`
 ```{r}
-bcast_linear.df %>% filter(MessageSize == 2) %>%
+bcast_linear.df %>% filter(MessageSize == 1) %>%
   ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
     geom_line(linetype = 1) +
     geom_point(size=1)+
@@ -92,6 +92,7 @@ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
 
 **Comments:**
 - same consideration as before
+- We can notice a huge difference w.r.t linear when we change node. For linear, when we have np>=24 the 3 different allocations seem to converge. And it makes sense, since linear sends from process 0 to all the other, and when we have processes in both nodes it will be the same (the same steps will be executed independently from the allocation). However, this is not the case for chain algorithm, where a precise order is followed. If we distribute processes by node, obviously the distance of messages will be longer than allocating by core or socket. And this is evident in the plot. Differences between allocation by core and socket, instead, are not so evident (probably the difference of communication btw cores in the same socket and cores in the same node is not so large...maybe working on just 1 numa region is beneficial?!)
 
 ### Bcast BinaryTree
 ```{r}
@@ -109,6 +110,8 @@ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
        color = 'Allocation')+
   theme_light()
 ```
+
+- Here we shoud understand why allocation by node have such behavior...
 
 ## Fix map allocation and compare different algorithms
 

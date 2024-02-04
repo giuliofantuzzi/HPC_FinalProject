@@ -11,13 +11,13 @@
 module load openMPI/4.1.5/gnu
 
 # Define the range of np values
-np_values=$(seq 2 2 48)
+np_values=$(seq 2 1 48)
 # Define the range of map values
 map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../bcast_results/bcast_binarytree.csv"
+out_csv="../bcast_results_bind/bcast_binarytree.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv

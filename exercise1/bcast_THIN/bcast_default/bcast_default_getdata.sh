@@ -17,7 +17,7 @@ map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../bcast_results/bcast_default.csv"
+out_csv="../bcast_results_bind/bcast_default.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv
