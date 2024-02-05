@@ -51,20 +51,29 @@ bcast.df<- rbind(bcast_default.df,bcast_linear.df,bcast_chain.df,bcast_binarytre
 ### Bcast linear
 At the moment let's fix the size of the message to 2 `MPI_CHAR`
 ```{r}
-bcast_linear.df %>% filter(MessageSize == 1) %>%
+linear_map_plt<- bcast_linear.df %>% filter(MessageSize == 1) %>%
   ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
     geom_line(linetype = 1) +
     geom_point(size=1)+
     geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
     annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
-    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
     xlim(2, 48) +  # Adjust the x-axis limits as needed
     labs(x = 'N. of processes (#cores)',
-         y = 'Latency',
-         title = 'Linear Broadcast Latency vs #cores (MessageSize = 2)',
+         y = 'Latency (μs)',
+         title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
          color = 'Allocation')+
-    theme_light()
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
 ```
+
+```{r}
+linear_map_plt
+```
+
 **Comments:**
 
 - As expected, both allocation by socket and core reveals some "jumps" when changing node, while allocation by node proceeds "linearly"
@@ -75,19 +84,27 @@ bcast_linear.df %>% filter(MessageSize == 1) %>%
 
 As we did above for linear broadcast, we fix the size of the message to 2 `MPI_CHAR`
 ```{r}
-bcast_chain.df %>% filter(MessageSize == 2) %>%
+chain_map_plt<- bcast_chain.df %>% filter(MessageSize == 1) %>%
 ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
   geom_line(linetype = 1) +
   geom_point(size=1)+
   geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
   annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
-  scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
   xlim(2, 48) +  # Adjust the x-axis limits as needed
   labs(x = 'N. of processes (#cores)',
-       y = 'Latency',
-       title = 'Chain Broadcast Latency vs #cores (MessageSize = 2)',
+       y = 'Latency (μs)',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
        color = 'Allocation')+
-  theme_light()
+  theme_light()+
+  theme(
+    legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+  )
+```
+
+```{r}
+chain_map_plt
 ```
 
 **Comments:**
@@ -96,22 +113,46 @@ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
 
 ### Bcast BinaryTree
 ```{r}
-bcast_binarytree.df %>% filter(MessageSize == 2) %>%
+binarytree_map_plt<- bcast_binarytree.df %>% filter(MessageSize == 1) %>%
+ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency (μs)',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
+       color = 'Allocation')+
+  theme_light()+
+  theme(
+    legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+  )
+```
+
+```{r}
+binarytree_map_plt
+```
+
+- Here we shoud understand why allocation by node have such behavior...
+
+```{r}
+bcast_default.df %>% filter(MessageSize == 1) %>%
 ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
   geom_line(linetype = 1) +
   geom_point(size=1)+
   geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
   annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
-  scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
   xlim(2, 48) +  # Adjust the x-axis limits as needed
   labs(x = 'N. of processes (#cores)',
        y = 'Latency',
-       title = 'BinaryTree Broadcast Latency vs #cores (MessageSize = 2)',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
        color = 'Allocation')+
   theme_light()
 ```
-
-- Here we shoud understand why allocation by node have such behavior...
 
 ## Fix map allocation and compare different algorithms
 
@@ -174,6 +215,8 @@ for(i in 1:length(sizes)){
 
 Plots[[1]] | Plots[[2]] | Plots[[3]]
 ```
+
+NB: this thing about message size can be commented mentioning the way chain is more performant than linear, since chain allows for message partitioning (and linear NO!)...eventually we can cite the reference!
 
 ### Comparing all bcast algorithms
 Noticed that allocation by core is associated to the lowest latency, let's fix Allocation to *core* and compare the algorithm behind the MPI broadcast operation.
