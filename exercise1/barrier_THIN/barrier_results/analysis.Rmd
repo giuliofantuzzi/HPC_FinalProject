@@ -34,10 +34,11 @@ barrier.df<- rbind(barrier_default.df,barrier_linear.df,barrier_doublering.df,ba
 
 
 ```{r,fig.width=8, fig.height=5}
-barrier.df %>% filter(Allocation == "core") %>% filter(Algorithm != "DoubleRing") %>% 
+barrier.df %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Tree","Linear","Bruck") )%>% 
   ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
     geom_line(linetype = 1) +
     geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
     geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
     annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
     #scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD","")) +
@@ -45,7 +46,7 @@ barrier.df %>% filter(Allocation == "core") %>% filter(Algorithm != "DoubleRing"
     labs(x = 'N. of processes (#cores)',
          y = 'Latency',
          title = 'Barrier Latency vs #cores (by Algorithm)',
-         color = 'Allocation')+
+         color = 'Algorithm')+
     theme_light()
 ```
 
