@@ -1,0 +1,51 @@
+---
+title: "Barrier Analysis"
+author: "Giulio Fantuzzi"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+```
+
+
+# Barrier analysis
+
+First of all, import the datasets i obtained from *ORFEO*
+```{r}
+scatter_default.df<- read.csv(file = "scatter_default.csv")
+scatter_linear.df<- read.csv(file = "scatter_linear.csv")
+scatter_linear_NonBlocking.df<- read.csv(file = "scatter_linearNonBlocking.csv")
+scatter_binomial.df<- read.csv(file = "scatter_binomial.csv")
+```
+
+Now we can bind them into a single df:
+```{r}
+scatter.df<- rbind(scatter_default.df,scatter_linear.df,scatter_linear_NonBlocking.df,scatter_binomial.df)
+```
+
+
+
+```{r,fig.width=8, fig.height=5}
+scatter.df %>% filter(Allocation == "core") %>% filter(MessageSize==2) %>%
+  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    #scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD","")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Scatter Latency vs #cores (by Algorithm)',
+         color = 'Algorithm')+
+    theme_light()
+```
+
+ì

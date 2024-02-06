@@ -32,6 +32,61 @@ barrier.df<- rbind(barrier_default.df,barrier_linear.df,barrier_doublering.df,ba
 ```
 
 
+# Fix algorithm and see allocation effect
+```{r,fig.width=8, fig.height=5}
+barrier.df %>% filter(Algorithm =="Linear")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    #scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD","")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Linear Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()
+```
+
+```{r,fig.width=8, fig.height=5}
+barrier.df %>% filter(Algorithm =="Tree")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    #scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD","")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Tree Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()
+```
+
+
+```{r,fig.width=8, fig.height=5}
+barrier.df %>% filter(Algorithm =="Bruck")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    #scale_color_manual(values = c("#27AE60","#E67E22","#3498DB","#8E44AD","")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Bruck Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()
+```
+
+
+# Fix allocation and see algorithms comparison
 
 ```{r,fig.width=8, fig.height=5}
 barrier.df %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Tree","Linear","Bruck") )%>% 
@@ -50,4 +105,28 @@ barrier.df %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Tree","
     theme_light()
 ```
 
-ì
+# Latency models
+
+(Al massimo qui si può dire di aver provato a fare hockney model e far vedere che effettivamente per il lineare funziona). Per gli altri, invece, fare un modello lineare
+
+NB: here we don't need to log2() the latency...the skewness of the variable was given by the effect of different message sizes, but here we don't consider the size anymore!!!
+
+```{r}
+linear_fit<- lm(formula= Latency ~ -1+Processes,
+                data=barrier_linear.df %>% filter(Allocation == "core")
+                )
+summary(linear_fit)
+```
+
+```{r}
+tree_fit<- lm(formula=Latency ~ -1+Processes+I(Processes^2),
+                data=barrier_tree.df %>% filter(Allocation == "core")
+                )
+summary(tree_fit)
+```
+```{r}
+bruck_fit<- lm(formula= Latency ~ -1+Processes+I(Processes^2),
+                data=barrier_bruck.df %>% filter(Allocation == "core")
+                )
+summary(bruck_fit)
+```
