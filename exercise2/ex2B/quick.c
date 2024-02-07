@@ -221,7 +221,7 @@ int main ( int argc, char **argv )
     {
     	#pragma omp single
         {
-      		parallel_quicksort(data,  0, N, compare_ge);
+		parallel_quicksort(data,  0, N, compare_ge);
         }
     }
     // Get the number of threads that were active during the most recent parallel region
@@ -351,27 +351,6 @@ void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     }
 }
 
-void parallel_quicksort_scheduled(data_t *data, int start, int end, compare_t cmp_ge) {
-    int size = end - start;
-    if (size >  2) {
-        int mid = partitioning(data, start, end, cmp_ge);
-        #pragma omp taskloop grainsize(THRESHOLD)
-        for (int i = start; i <= mid; ++i) {
-            // Sort the left half
-            parallel_quicksort_scheduled(data, start, mid, cmp_ge);
-        }
-        #pragma omp taskloop grainsize(THRESHOLD)
-        for (int i = mid + 1; i < end; ++i) {
-            // Sort the right half
-            parallel_quicksort_scheduled(data, mid + 1, end, cmp_ge);
-        }
-    else {
-        // Handle small subarrays sequentially
-        if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
-            SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
-        }
-    }
-}
 #endif
 
 
