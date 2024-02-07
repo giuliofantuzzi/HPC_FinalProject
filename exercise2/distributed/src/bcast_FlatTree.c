@@ -23,7 +23,7 @@ void bcast_FlatTree(void* data,int count,MPI_Datatype datatype,int root,MPI_Comm
   else{// If we are a receiver process, receive the data from the root
     MPI_Recv(data, count, datatype, root, 0, communicator, MPI_STATUS_IGNORE);
     // print from who i received and the value I received
-    printf("I am %d and I received from %d the value %d\n",world_rank,root,*(int*)data);  
+    // printf("I am %d and I received from %d the value %d\n",world_rank,root,*(int*)data);  
   }
 }
 //--------------------------------------------------------------------------------------
