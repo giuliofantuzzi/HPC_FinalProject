@@ -142,9 +142,10 @@ verify_t  show_array;
 extern inline int partitioning( data_t *, int, int, compare_t );
 
 // declare the sorting function
-//
-void quicksort( data_t *, int, int, compare_t ); 
-
+// SERIAL QUICKSORT
+void serial_quicksort( data_t *, int, int, compare_t ); 
+// PARALLEL QUICKSORT
+void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
 
 // ================================================================
 //  CODE
@@ -199,45 +200,53 @@ int main ( int argc, char **argv )
  #endif
 
  // Print the generated data
- printf("Generated data:\n");
- show_array(data, 0, N, 0);
+ //printf("Generated data:\n");
+ //show_array(data, 0, N, 0);
 
   
   // ---------------------------------------------
   //  process 
   //
   struct timespec ts;
-  int    nthreads = 1;
+  //int    nthreads=1;
   double tstart = CPU_TIME;
   
- #if defined(_OPENMP)
-
- #pragma omp parallel
-  {
-
-
-  }
-  
- #else
-
-  quicksort( data, 0, N, compare_ge );
-  
- #endif
-  
-  double tend = CPU_TIME;  
-  
-  // ---------------------------------------------
-  //  release the memory and stop
-  //
-
+  #if defined(_OPENMP)
+    //Set the number of threads to use
+    int nthreads =  0; // Set it to  0 to allow OpenMP to choose
+    omp_set_num_threads(nthreads);
+    //int spawned=omp_get_num_threads();
+    //printf("Active threads spawned: %d\n",spawned);
+    // Call the parallel version of quicksort
+    #pragma omp parallel
+    {
+    parallel_quicksort(data,  0, N, compare_ge);
+    }
+    // Get the number of threads that were active during the most recent parallel region
+    int active_threads = omp_get_num_threads();
+    if ( verify_sorting( data, 0, N, 0) ){
+      double tend = CPU_TIME; 
+      printf("Execution by %d threads in a total time of %g sec\n",active_threads, tend-tstart);
+      //printf("Sorted data:\n");
+      //show_array(data, 0, N, 0);
+    }
+    else{
+      printf("the array is not sorted correctly\n");
+    }
+  #else
+  serial_quicksort( data, 0, N, compare_ge );
   if ( verify_sorting( data, 0, N, 0) ){
-    printf("Execution by%d threads in a total time of %g sec\n", nthreads, tend-tstart);
-    printf("Sorted data:\n");
-    show_array(data, 0, N, 0);
+    double tend = CPU_TIME; 
+    printf("Serial Execution by in a total time of %g sec\n",tend-tstart);
+    //printf("Sorted data:\n");
+    //show_array(data, 0, N, 0);
   }
   else{
     printf("the array is not sorted correctly\n");
   }
+
+  #endif
+  // Release the memory and stop
   free( data );
 
   return 0;
@@ -277,7 +286,7 @@ inline int partitioning( data_t *data, int start, int end, compare_t cmp_ge )
 }
 
 
-void quicksort( data_t *data, int start, int end, compare_t cmp_ge )
+void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 {
 
  #if defined(DEBUG)
@@ -298,8 +307,8 @@ void quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 
       CHECK;
       
-      quicksort( data, start, mid, cmp_ge );    // sort the left half
-      quicksort( data, mid+1, end , cmp_ge );   // sort the right half
+      serial_quicksort( data, start, mid, cmp_ge );    // sort the left half
+      serial_quicksort( data, mid+1, end , cmp_ge );   // sort the right half
     }
   else
     {
@@ -308,10 +317,42 @@ void quicksort( data_t *data, int start, int end, compare_t cmp_ge )
     }
 }
 
+#define RECURSION_LIMIT  1000
+
+void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
+    int size = end - start;
+    if (size >  2) {
+        // Limit recursion depth
+        if (size <= RECURSION_LIMIT) {
+            int mid = partitioning(data, start, end, cmp_ge);
+
+            // Use OpenMP to parallelize the recursive calls
+            #pragma omp parallel sections
+            {
+                #pragma omp section
+                {
+                    // Sort the left half
+                    parallel_quicksort(data, start, mid, cmp_ge);
+                }
+                #pragma omp section
+                {
+                    // Sort the right half
+                    parallel_quicksort(data, mid +  1, end, cmp_ge);
+                }
+            }
+        } else {
+            // Switch to sequential sorting for larger subproblems
+            serial_quicksort(data, start, end, cmp_ge);
+        }
+    } else {
+        // Handle small subarrays sequentially
+        if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
+            SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
+        }
+    }
+}
 
 
-
- 
 int verify_sorting( data_t *data, int start, int end, int not_used )
 {
   int i = start;
