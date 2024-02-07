@@ -146,7 +146,6 @@ extern inline int partitioning( data_t *, int, int, compare_t );
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // PARALLEL QUICKSORT
 void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
-void parallel_quicksort_nested( data_t* data, int start, int end,compare_t cmp_ge);
 // ================================================================
 //  CODE
 // ================================================================
@@ -321,33 +320,6 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 }
 
 #ifdef _OPENMP
-void parallel_quicksort_nested( data_t* data, int start, int end,compare_t cmp_ge)
-{
-	
-	int size = end-start+1;
-  	if ( size > 2 )
-    	{
-      		int mid = partitioning( data, start, end,cmp_ge);
-
-		omp_set_dynamic(0);
-		#pragma omp parallel num_threads(2)
-		{	
-			int id = omp_get_thread_num();
-			if(id == 0){
-				printf("#threads: %d \n", omp_get_num_threads());
-				parallel_quicksort_nested(data, start, mid-1,cmp_ge);
-			}
-			if(id == 1)
-				parallel_quicksort_nested(data, mid+1, end,cmp_ge);
-		}
-	}
-  	else
-    	{	
-      		if ( (size == 2) && compare_ge ( (void*)&data[start], (void*)&data[end] ) )
-        		SWAP( (void*)&data[start], (void*)&data[end], sizeof(data_t) );
-    	}	
-}
-
 
 void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
@@ -378,42 +350,30 @@ void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
         }
     }
 }
+
+void parallel_quicksort_scheduled(data_t *data, int start, int end, compare_t cmp_ge) {
+    int size = end - start;
+    if (size >  2) {
+        int mid = partitioning(data, start, end, cmp_ge);
+        #pragma omp taskloop grainsize(THRESHOLD)
+        for (int i = start; i <= mid; ++i) {
+            // Sort the left half
+            parallel_quicksort_scheduled(data, start, mid, cmp_ge);
+        }
+        #pragma omp taskloop grainsize(THRESHOLD)
+        for (int i = mid + 1; i < end; ++i) {
+            // Sort the right half
+            parallel_quicksort_scheduled(data, mid + 1, end, cmp_ge);
+        }
+    else {
+        // Handle small subarrays sequentially
+        if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
+            SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
+        }
+    }
+}
 #endif
 
-
-// #define RECURSION_LIMIT  1000
-
-// void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
-//     int size = end - start;
-//     if (size >  2) {
-//         // Limit recursion depth//         if (size <= RECURSION_LIMIT) {
-//             int mid = partitioning(data, start, end, cmp_ge);
-
-//             // Use OpenMP to parallelize the recursive calls
-//             #pragma omp parallel sections
-//             {
-//                 #pragma omp section
-//                 {
-//                     // Sort the left half
-//                     parallel_quicksort(data, start, mid, cmp_ge);
-//                 }
-//                 #pragma omp section
-//                 {
-//                     // Sort the right half
-//                     parallel_quicksort(data, mid +  1, end, cmp_ge);
-//                 }
-//             }
-//         } else {
-//             // Switch to sequential sorting for larger subproblems
-//             serial_quicksort(data, start, end, cmp_ge);
-//         }
-//     } else {
-//         // Handle small subarrays sequentially
-//         if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
-//             SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
-//         }
-//     }
-// }
 
 
 int verify_sorting( data_t *data, int start, int end, int not_used )
