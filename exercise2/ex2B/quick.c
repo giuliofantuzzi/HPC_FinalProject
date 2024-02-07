@@ -146,7 +146,7 @@ extern inline int partitioning( data_t *, int, int, compare_t );
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // PARALLEL QUICKSORT
 void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
-
+void parallel_quicksort_nested( data_t* data, int start, int end,compare_t cmp_ge);
 // ================================================================
 //  CODE
 // ================================================================
@@ -213,20 +213,24 @@ int main ( int argc, char **argv )
   
   #if defined(_OPENMP)
     //Set the number of threads to use
-    int nthreads =  4; // Set it to  0 to allow OpenMP to choose
-    omp_set_num_threads(nthreads);
+    //int nthreads =  4; // Set it to  0 to allow OpenMP to choose
+    //omp_set_num_threads(nthreads);
     //int spawned=omp_get_num_threads();
     //printf("Active threads spawned: %d\n",spawned);
     // Call the parallel version of quicksort
     #pragma omp parallel
     {
-    parallel_quicksort(data,  0, N, compare_ge);
+    	#pragma omp single
+        {
+      		parallel_quicksort(data,  0, N, compare_ge);
+        }
     }
     // Get the number of threads that were active during the most recent parallel region
-    int active_threads = omp_get_num_threads();
+    //int active_threads = omp_get_num_threads();
     if ( verify_sorting( data, 0, N, 0) ){
       double tend = CPU_TIME; 
-      printf("Execution by %d threads in a total time of %g sec\n",active_threads, tend-tstart);
+      //printf("Execution by %d threads in a total time of %g sec\n",active_threads, tend-tstart);
+      printf("OMP execution in a total time of %g sec\n", tend-tstart);
       //printf("Sorted data:\n");
       //show_array(data, 0, N, 0);
     }
@@ -316,6 +320,34 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
     }
 }
 
+#ifdef _OPENMP
+void parallel_quicksort_nested( data_t* data, int start, int end,compare_t cmp_ge)
+{
+	
+	int size = end-start+1;
+  	if ( size > 2 )
+    	{
+      		int mid = partitioning( data, start, end,cmp_ge);
+
+		omp_set_dynamic(0);
+		#pragma omp parallel num_threads(2)
+		{	
+			int id = omp_get_thread_num();
+			if(id == 0){
+				printf("#threads: %d \n", omp_get_num_threads());
+				parallel_quicksort_nested(data, start, mid-1,cmp_ge);
+			}
+			if(id == 1)
+				parallel_quicksort_nested(data, mid+1, end,cmp_ge);
+		}
+	}
+  	else
+    	{	
+      		if ( (size == 2) && compare_ge ( (void*)&data[start], (void*)&data[end] ) )
+        		SWAP( (void*)&data[start], (void*)&data[end], sizeof(data_t) );
+    	}	
+}
+
 
 void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
@@ -323,33 +355,38 @@ void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
         int mid = partitioning(data, start, end, cmp_ge);
 
         // Use OpenMP to parallelize the recursive calls
-        #pragma omp parallel sections
+        CHECK; 
+	#pragma omp task
         {
-            #pragma omp section
-            {
-                // Sort the left half
-                parallel_quicksort(data, start, mid, cmp_ge);
-            }
-            #pragma omp section
-            {
-                // Sort the right half
-                parallel_quicksort(data, mid +  1, end, cmp_ge);
-            }
+          // Sort the left half
+	  //printf("LEFT Recursive call by thread %d\n",omp_get_thread_num());
+          parallel_quicksort(data, start, mid, cmp_ge);
+         }
+	
+         #pragma omp task
+         {
+          // Sort the right half
+          //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
+	  parallel_quicksort(data, mid +  1, end, cmp_ge);
+         }
         }
-    } else {
+    	
+    else {
         // Handle small subarrays sequentially
         if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
             SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
         }
     }
 }
+#endif
+
+
 // #define RECURSION_LIMIT  1000
 
 // void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
 //     int size = end - start;
 //     if (size >  2) {
-//         // Limit recursion depth
-//         if (size <= RECURSION_LIMIT) {
+//         // Limit recursion depth//         if (size <= RECURSION_LIMIT) {
 //             int mid = partitioning(data, start, end, cmp_ge);
 
 //             // Use OpenMP to parallelize the recursive calls
