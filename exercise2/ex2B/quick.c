@@ -145,7 +145,7 @@ extern inline int partitioning( data_t *, int, int, compare_t );
 // SERIAL QUICKSORT
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // PARALLEL QUICKSORT
-void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
+void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
 // ================================================================
 //  CODE
 // ================================================================
@@ -171,22 +171,21 @@ int main ( int argc, char **argv )
   
   // ---------------------------------------------
   //  generate the array
-  //
-  
+
   data_t *data = (data_t*)malloc(N*sizeof(data_t));
   long int seed;
- #if defined(_OPENMP)
- #pragma omp parallel
+  #if defined(_OPENMP)
+  #pragma omp parallel
   {
     int me             = omp_get_thread_num();
     short int seed     = time(NULL) % ( (1 << sizeof(short int))-1 );
     short int seeds[3] = {seed-me, seed+me, seed+me*2};
 
-   #pragma omp for
-    for ( int i = 0; i < N; i++ )
-      data[i].data[HOT] = erand48( seeds );
-  }
- #else
+    #pragma omp for
+      for ( int i = 0; i < N; i++ )
+        data[i].data[HOT] = erand48( seeds );
+      } 
+  #else
   {
     seed = time(NULL);
     srand48(seed);
@@ -196,13 +195,8 @@ int main ( int argc, char **argv )
     for ( int i = 0; i < N; i++ )
       data[i].data[HOT] = drand48();
   }    
- #endif
+  #endif
 
- // Print the generated data
- //printf("Generated data:\n");
- //show_array(data, 0, N, 0);
-
-  
   // ---------------------------------------------
   //  process 
   //
@@ -221,7 +215,7 @@ int main ( int argc, char **argv )
     {
     	#pragma omp master
         {
-		parallel_quicksort(data,  0, N, compare_ge);
+		omp_quicksort(data,  0, N, compare_ge);
         }
     }
     // Get the number of threads that were active during the most recent parallel region
@@ -323,7 +317,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 
 #ifdef _OPENMP
 
-void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
+void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size >  2) {
         int mid = partitioning(data, start, end, cmp_ge);
@@ -334,14 +328,14 @@ void parallel_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
         {
           // Sort the left half
 	  //printf("LEFT Recursive call by thread %d\n",omp_get_thread_num());
-          parallel_quicksort(data, start, mid, cmp_ge);
+          omp_quicksort(data, start, mid, cmp_ge);
          }
 	
          #pragma omp task
          {
           // Sort the right half
           //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
-	  parallel_quicksort(data, mid +  1, end, cmp_ge);
+	  omp_quicksort(data, mid +  1, end, cmp_ge);
          }
         }
     	
