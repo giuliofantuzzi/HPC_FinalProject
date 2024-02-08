@@ -159,17 +159,17 @@ First of all let's present the hockney model for the linear barrier algorithm:
 alpha<- 0.19
 # Model will be Latency= alpha*(P-1) = alpha*P - alpha, with P: number of processes
 barrier_linear.df$HockneyLatency <- alpha* barrier_linear.df$Processes - alpha
+barrier_linear.df$ObservedLatency <-barrier_linear.df$Latency
 # Now make the plot
-Hockney.df <- tidyr::gather(barrier_linear.df %>% filter(Allocation=="core"), key = "Variable", value = "Value", -Processes, -Allocation, -Algorithm)
-
+Hockney.df <- tidyr::gather(barrier_linear.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
 # Plot using ggplot
-ggplot(Hockney.df, aes(x = Processes, y = Value, color = Variable)) +
-  geom_point(data = subset(Hockney.df, Variable == "Latency"), size = 1) +
-  geom_line(data = subset(Hockney.df, Variable == "HockneyLatency"), linetype = 1) +
-  labs(title = "Linear Barrier: Hockney Model fit",
-       x = "Processes",
-       y = "Value") +
-  scale_color_manual(values = c("Latency" = "grey19", "HockneyLatency" = "#00BFC1")) +
+ggplot(Hockney.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(Hockney.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(Hockney.df, Legend == "HockneyLatency"), linetype = 1) +
+  labs(title = expression(paste("Linear Barrier: Hockney model fit (with ",hat(alpha),"= 0.19 μs)")),
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey19", "HockneyLatency" = "#00BFC1")) +
   theme_minimal()
 ```
 
