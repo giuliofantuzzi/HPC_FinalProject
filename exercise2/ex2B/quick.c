@@ -219,7 +219,7 @@ int main ( int argc, char **argv )
     // Call the parallel version of quicksort
     #pragma omp parallel
     {
-    	#pragma omp single
+    	#pragma omp master
         {
 		parallel_quicksort(data,  0, N, compare_ge);
         }
