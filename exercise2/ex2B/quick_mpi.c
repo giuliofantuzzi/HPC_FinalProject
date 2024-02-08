@@ -15,16 +15,23 @@
 #include <mpi.h>
 #include <time.h>
 
-
 #if defined(_OPENMP)
+
 // measure the wall-clock time
-#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
+                  (double)ts.tv_nsec * 1e-9)
+
 // measure the cpu thread time
-#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec + (double)myts.tv_nsec * 1e-9)
+#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +     \
+                     (double)myts.tv_nsec * 1e-9)
+
 #else
+
 // measure ther cpu process time
-#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
+                  (double)ts.tv_nsec * 1e-9)
 #endif
+
 
 #if defined(DEBUG)
 #define VERBOSE
@@ -76,9 +83,6 @@ verify_t  show_array;
 extern inline int partitioning( data_t *, int, int, compare_t );
 // declare the sorting function
 // ===============================================================================================
-MPI_Datatype MPI_DATA_T;
-MPI_Type_contiguous(sizeof(data_t), MPI_BYTE, &MPI_DATA_T);
-MPI_Type_commit(&MPI_DATA_T);
 // SERIAL QUICKSORT
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // PARALLEL QUICKSORT
@@ -95,6 +99,9 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int n_processes;
     MPI_Comm_size(MPI_COMM_WORLD, &n_processes);
+    MPI_Datatype MPI_DATA_T;
+    MPI_Type_contiguous(sizeof(data_t), MPI_BYTE, &MPI_DATA_T);
+    MPI_Type_commit(&MPI_DATA_T);
     //-----------------------------------------------------------------------------
     // (2) GENERATES PROCESS CHUNK OF DATA
     int N=N_dflt; 
@@ -103,15 +110,16 @@ int main(int argc, char** argv) {
         int a = 0;
         if ( argc > ++a ) N = atoi(*(argv+a));
     }
-    int local_data_size = N / world_size; // Assuming N is the total size of the data
+    int local_data_size = N / n_processes; // Assuming N is the total size of the data
     int* local_data = malloc(local_data_size * sizeof(int));
     // Generate random data locally
-    srand(time(NULL) + world_rank);
+    srand(time(NULL) + rank);
     for (int i =  0; i < local_data_size; i++) {
         local_data[i] = rand() %  100; // Random numbers between  0 and  99
     }
     //-----------------------------------------------------------------------------
     // (3) START TIMING
+    struct timespec ts;
     double tstart, tend;
     tstart = CPU_TIME;
     //-----------------------------------------------------------------------------
@@ -121,17 +129,17 @@ int main(int argc, char** argv) {
         {
             #pragma omp master
             {
-                omp_quicksort(data,  0, N, compare_ge);
+                omp_quicksort(local_data,  0, N, compare_ge);
             }
         }
     #else
-        serial_quicksort( data, 0, N, compare_ge );
+        serial_quicksort(local_data, 0, N, compare_ge );
     #endif
     //-----------------------------------------------------------------------------
     // (5) GLOBAL MERGING
     // In process 0 create the final array
-    if(rank==0){
-        data_t *data = (data_t*)malloc(N*sizeof(data_t));
+    if(rank==0)
+        data_t* data = (data_t*)malloc(N*sizeof(data_t));
     }
     // Return the sorted data to the master process by recursively merging two sorted arrays
     for (int step = 1; step < n_processes; step = 2 * step) {
@@ -139,7 +147,7 @@ int main(int argc, char** argv) {
             MPI_Send(local_data, local_data_size, MPI_DATA_T, rank - step, 0, MPI_COMM_WORLD);
             break;
         }
-        if (rank + step < num_processes) {
+        if (rank + step < n_processes) {
             int received_data_size = (N >= local_data_size * (rank + 2 * step)) ? local_data_size * step : (N - local_data_size * (rank + step));
             data_t* received_data = (data_t*)malloc(received_data_size*sizeof(data_t));
 
