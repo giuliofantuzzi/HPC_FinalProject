@@ -260,30 +260,32 @@ int main ( int argc, char **argv )
 
 inline int partitioning( data_t *data, int start, int end, compare_t cmp_ge )
 {
-  
-  // pick up the meadian of [0], [mid] and [end] as pivot
-  //
-  
-  /* to be done */
-
-  // pick up the last element as pivot
-  //
-  --end;  
-  void *pivot = (void*)&data[end];
-
-  // partition around the pivot element
-  
-  int pointbreak = end-1;
+  //--------------------------------------------------------------------------
+  // (1) pick up the meadian of [0], [mid] and [end] as pivot
+  int mid = start + (end - start) / 2;
+  // Swap the middle element with the last element to use it as the pivot
+  SWAP((void*)&data[mid], (void*)&data[end - 1], sizeof(data_t));
+  // Use the last element as the pivot
+  void *pivot = (void*)&data[end - 1];
+  // Partition around the pivot element
+  int pointbreak = end - 2; // Adjust the starting point for the loop
+  //--------------------------------------------------------------------------
+  // (2) pick up the last element as pivot
+  // //
+  // --end;  
+  // void *pivot = (void*)&data[end];
+  // // partition around the pivot element
+  //int pointbreak = end-1;
+  //--------------------------------------------------------------------------
   for ( int i = start; i <= pointbreak; i++ )
     if( cmp_ge( (void*)&data[i], pivot ) )
-      {
-	while( (pointbreak > i) && cmp_ge( (void*)&data[pointbreak], pivot ) ) pointbreak--;
-	if (pointbreak > i ) 
-	  SWAP( (void*)&data[i], (void*)&data[pointbreak--], sizeof(data_t) );
-      }  
-  pointbreak += !cmp_ge( (void*)&data[pointbreak], pivot ) ;
-  SWAP( (void*)&data[pointbreak], pivot, sizeof(data_t) );
-  
+    {
+	    while( (pointbreak > i) && cmp_ge( (void*)&data[pointbreak], pivot ) ) pointbreak--;
+	    if (pointbreak > i ) 
+	      SWAP( (void*)&data[i], (void*)&data[pointbreak--], sizeof(data_t) );
+    }  
+    pointbreak += !cmp_ge( (void*)&data[pointbreak], pivot ) ;
+    SWAP( (void*)&data[pointbreak], pivot, sizeof(data_t) ); 
   return pointbreak;
 }
 
