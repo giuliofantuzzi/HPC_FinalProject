@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         if ( argc > ++a ) N = atoi(*(argv+a));
     }
     int local_data_size = N / n_processes; // Assuming N is the total size of the data
-    int* local_data = malloc(local_data_size * sizeof(int));
+    data_t* local_data = malloc(local_data_size * sizeof(data_t));
     // Generate random data locally
     srand(time(NULL) + rank);
     for (int i =  0; i < local_data_size; i++) {
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     //-----------------------------------------------------------------------------
     // (5) GLOBAL MERGING
     // In process 0 create the final array
-    if(rank==0)
+    if(rank==0){
         data_t* data = (data_t*)malloc(N*sizeof(data_t));
     }
     // Return the sorted data to the master process by recursively merging two sorted arrays
@@ -185,6 +185,7 @@ int main(int argc, char** argv) {
             printf("the array is not sorted correctly\n");
         }
     }
+    free(data);
 }
 
 // ===============================================================================================
