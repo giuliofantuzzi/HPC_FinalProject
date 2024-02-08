@@ -186,9 +186,14 @@ int main(int argc, char** argv){
     // mpi_quicksort(&loc_data, &chunk_size, 0, 1, rank, MPI_DATA_T, compare_ge);
     // else
     // mpi_quicksort(&loc_data, &chunk_size, 2, 3, rank, MPI_DATA_T, compare_ge);
+    #pragma omp parallel
+    {
+	#pragma omp master
+	{
+        mpi_quicksort1(&loc_data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
+   	}
+    }
 
-    mpi_quicksort1(&loc_data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
-    
 
     MPI_Barrier(MPI_COMM_WORLD);
 
