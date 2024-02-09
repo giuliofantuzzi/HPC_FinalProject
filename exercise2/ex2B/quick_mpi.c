@@ -1,5 +1,5 @@
 // ================================================================
-//  LIBRARIES AND GLOBAL DEFINITIONS
+//  LIBRARIES AND GLOBAL SETTINGS
 // ================================================================
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,27 +41,21 @@ typedef struct {
 #endif
 
 // ================================================================
-//  FUNCTION PROTOTYPES
+//  FUNCTIONS DECLARATION
 // ================================================================
 
-// Define compare function that will be used by qsort
 typedef int compare_t(const void *, const void *);
-
-// Define verifying function type, used to test results
 typedef int verify_t(data_t *, int, int, int);
-
-// Declare the functions
-compare_t compare;      // compare function
-compare_t compare_ge;   // compare function for "greater or equal"
+compare_t compare;      
+compare_t compare_ge;   
 verify_t verify_partitioning;
 verify_t verify_sorting;
 verify_t show_array;
-//extern inline int partitioning( data_t *, int, int, compare_t );
-int partitioning(data_t*, int, int, compare_t);
+extern inline int partitioning(data_t*, int, int, compare_t);
 int mpi_partitioning(data_t*, int, int, compare_t, void*);
 void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm);
-// void mpi_quicksort(data_t*, int*, int, int, int, MPI_Datatype, compare_t);
 int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);
+
 // SERIAL QUICKSORT
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // OMP QUICKSORT
@@ -69,11 +63,14 @@ void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
 
 
 // ================================================================
-//  MAIN PROGRAM
+//  MAIN 
 // ================================================================
 int main(int argc, char** argv){
-    //----------------------------------------------------------------------------------------------
-    // (1) INITIALIZATION
+
+    //.................................................................................................
+    // (1) INITIALIZATION 
+    //.................................................................................................
+
     int N = SIZE;
     //int nthreads=1;
     {
@@ -103,8 +100,9 @@ int main(int argc, char** argv){
     MPI_Type_contiguous(sizeof(data_t), MPI_BYTE, &MPI_DATA_T);
     MPI_Type_commit(&MPI_DATA_T);
 
-    // ----------------------------------------------------------------------------------------------
+    //.................................................................................................
     //  (2) PROCESS CHUNK OF DATA
+    //.................................................................................................
 
     int chunk_size = (rank < N % n_processes) ? N / n_processes + 1 : N / n_processes;
     data_t *data = (data_t*)malloc(chunk_size*sizeof(data_t));
@@ -132,8 +130,10 @@ int main(int argc, char** argv){
     }    
     #endif
 
-    // ----------------------------------------------------------------------------------------------
-    // (3) SORT THE DATA
+    //.................................................................................................
+    // (3) SORT THE DATA AND MEASURE TIME
+    //.................................................................................................
+
     // Wait all processes to finish generating the data
     MPI_Barrier(MPI_COMM_WORLD);
     double t_start, t_end;
@@ -142,59 +142,52 @@ int main(int argc, char** argv){
     mpi_quicksort(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
     
     t_end = MPI_Wtime();
-    // ----------------------------------------------------------------------------------------------
-
+    double time = t_end - t_start;
+    
+    //.................................................................................................
+    // (4) VERIFY THE SORTING
+    //.................................................................................................
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // ---------------------------------------------
     // Show the sorted array
-    for (int i = 0; i < n_processes; i++){
-        if (rank == i){
-            printf("Process %d has sorted:\n", rank);
-            show_array(data, 0, chunk_size, 0);
+    // for (int i = 0; i < n_processes; i++){
+    //     if (rank == i){
+    //         printf("Process %d has sorted:\n", rank);
+    //         show_array(data, 0, chunk_size, 0);
+    //     }
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    // }
+    // Verify the results
+    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
+    int global_check = 0;
+    MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0){
+        if (global_check == n_processes){
+            printf("Array sorted correctly :)\n
+                    Execution time: %f\n", time);
+        } else {
+            printf("The array has not been sorted correctly :(\n");
         }
-        //MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    double time = t_end - t_start;
-    MPI_Barrier(MPI_COMM_WORLD);
-    // ---------------------------------------------
-    // Verify the results
-    int test = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
-
-    // int global_test = 0;
-    // MPI_Reduce(&test, &global_test, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-
-    //if (rank == 0){
-        //if (global_test == n_processes)
-    //    printf("Test result is %d\n", global_test);
-    //    printf("Time elapsed is %f\n", time);
-        // else
-        // printf("Test failed\n");
-    //}
-
-    // printf("Rank %d has loc_data of size %d\n", rank, chunk_size);
-    //free(data);
+    //.................................................................................................
+    // (4) FINALIZATION 
+    //.................................................................................................
     free(data);
-    // free(sorted);
-    // free(sorted);
-    // free(merged);
     MPI_Type_free(&MPI_DATA_T);
-    //printf("Data freed\n");
-    //MPI_Finalize();
     int finalize_retcode = MPI_Finalize();
     fprintf(stderr, "Process, return_code\n");
     fprintf(stderr, "%i, %i\n", rank, finalize_retcode);
-    // free(try);
-    // free(chunk_sizes);
 
     return 0;
 }
 
 
-
+// ================================================================
+//  FUNCTIONS DEFINITION
+// ================================================================
 
 #define SWAP(A,B,SIZE) do {int sz = (SIZE); char *a = (A); char *b = (B); \
 do { char _temp = *a;*a++ = *b;*b++ = _temp;} while (--sz);} while (0)
@@ -487,16 +480,6 @@ int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MP
             return 0;
         }
     }
-
     // If everything is fine, return 1 to indicate global sorting
     return 1;
-
-    // A LIVELLO DI SINGOLO PROCESSO FUNZIONA, MA BISOGNEREBBE TROVARE IL MODO DI ACCUMULARE I CODICI DI USCITA SU UN PROCESSO
-    // (ad esempio il master) E POI FARE UNA VERIFICA GLOBALE (IDEA: USARE UNA MPI_REDUCE E VEDERE SE LA SOMMA DEI CODICI DI USCITA 
-    // E' UGUALE AL NUMERO DI PROCESSI).
-
-    // OGNUNO AVRA IL SUO CODICE DI USCITA, CHE SARA' 1 SE TUTTO E' ANDATO BENE, 0 ALTRIMENTI. POI RANK0 FARA' UNA REDUCE SUI CODICI
-    // DI USCITA E SE LA SOMMA E' UGUALE AL NUMERO DI PROCESSI, ALLORA TUTTO E' ANDATO BENE.
 }
-
-
