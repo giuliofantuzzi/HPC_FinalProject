@@ -56,7 +56,7 @@ compare_t compare_ge;   // compare function for "greater or equal"
 verify_t verify_partitioning;
 verify_t verify_sorting;
 verify_t show_array;
-
+//extern inline int partitioning( data_t *, int, int, compare_t );
 int partition(data_t*, int, int, compare_t);
 int mpi_partition(data_t*, int, int, compare_t, void*);
 void mpi_quicksort1(data_t**, int*, MPI_Datatype, MPI_Comm);
@@ -157,8 +157,8 @@ int main(int argc, char** argv){
         //MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    double time = end_time - start_time;
-    MPI_Barrier(MPI_COMM_WORLD);cd
+    double time = t_end - t_start;
+    MPI_Barrier(MPI_COMM_WORLD);
     // ---------------------------------------------
     // Verify the results
     int test = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
@@ -167,13 +167,13 @@ int main(int argc, char** argv){
     // MPI_Reduce(&test, &global_test, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
 
-    if (rank == 0){
+    //if (rank == 0){
         //if (global_test == n_processes)
-        printf("Test result is %d\n", global_test);
-        printf("Time elapsed is %f\n", time);
+    //    printf("Test result is %d\n", global_test);
+    //    printf("Time elapsed is %f\n", time);
         // else
         // printf("Test failed\n");
-    }
+    //}
 
     // printf("Rank %d has loc_data of size %d\n", rank, chunk_size);
     //free(data);
@@ -182,7 +182,7 @@ int main(int argc, char** argv){
     // free(sorted);
     // free(merged);
     MPI_Type_free(&MPI_DATA_T);
-    printf("Data freed\n");
+    //printf("Data freed\n");
     //MPI_Finalize();
     int finalize_retcode = MPI_Finalize();
     fprintf(stderr, "Process, return_code\n");
@@ -276,7 +276,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
   int size = end-start;
   if ( size > 2 )
     {
-      int mid = partitioning( data, start, end, cmp_ge );
+      int mid = partition( data, start, end, cmp_ge );
 
       CHECK;
       
@@ -295,7 +295,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size >  2) {
-        int mid = partitioning(data, start, end, cmp_ge);
+        int mid = partition(data, start, end, cmp_ge);
 
         // Use OpenMP to parallelize the recursive calls
         CHECK; 
@@ -360,7 +360,7 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
     
     if (num_procs > 1){
         int pivot_rank = (num_procs - 1) / 2;
-        printf("Pivot rank is %d\n", pivot_rank);
+        //printf("Pivot rank is %d\n", pivot_rank);
         data_t* pivot = (data_t*)malloc(sizeof(data_t));
         data_t* pivots = (data_t*)malloc((num_procs+1)*sizeof(data_t));
         // MPI_Gather(&(*loc_data)[(*chunk_size -1)/2], 1, MPI_DATA_T, pivots, 1, MPI_DATA_T, 0, comm);
@@ -442,7 +442,7 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
             }
         #else
             serial_quicksort(*loc_data, 0, *chunk_size, compare_ge);
-
+	#endif
     }
 }
 
