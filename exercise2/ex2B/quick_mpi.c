@@ -57,9 +57,9 @@ verify_t verify_partitioning;
 verify_t verify_sorting;
 verify_t show_array;
 //extern inline int partitioning( data_t *, int, int, compare_t );
-int partition(data_t*, int, int, compare_t);
-int mpi_partition(data_t*, int, int, compare_t, void*);
-void mpi_quicksort1(data_t**, int*, MPI_Datatype, MPI_Comm);
+int partitioning(data_t*, int, int, compare_t);
+int mpi_partitioning(data_t*, int, int, compare_t, void*);
+void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm);
 // void mpi_quicksort(data_t*, int*, int, int, int, MPI_Datatype, compare_t);
 int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);
 // SERIAL QUICKSORT
@@ -139,7 +139,7 @@ int main(int argc, char** argv){
     double t_start, t_end;
     t_start= MPI_Wtime();
 
-    mpi_quicksort1(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
+    mpi_quicksort(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
     
     t_end = MPI_Wtime();
     // ----------------------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ int main(int argc, char** argv){
 #define SWAP(A,B,SIZE) do {int sz = (SIZE); char *a = (A); char *b = (B); \
 do { char _temp = *a;*a++ = *b;*b++ = _temp;} while (--sz);} while (0)
 
-int partition(data_t* data, int start, int end, compare_t cmp_ge){
+int partitioning(data_t* data, int start, int end, compare_t cmp_ge){
 
     // Pick the median of the [0], [mid] and [end] element as pivot
     int mid = (start + end-1) / 2;
@@ -276,7 +276,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
   int size = end-start;
   if ( size > 2 )
     {
-      int mid = partition( data, start, end, cmp_ge );
+      int mid = partitioning( data, start, end, cmp_ge );
 
       CHECK;
       
@@ -295,7 +295,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size >  2) {
-        int mid = partition(data, start, end, cmp_ge);
+        int mid = partitioning(data, start, end, cmp_ge);
 
         // Use OpenMP to parallelize the recursive calls
         CHECK; 
@@ -325,7 +325,7 @@ void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
 #endif
 
 
-int mpi_partition(data_t* data, int start, int end, compare_t cmp_ge, void* pivot){
+int mpi_partitioning(data_t* data, int start, int end, compare_t cmp_ge, void* pivot){
     // Function that partitions the array into two parts given a pivot
     // and returns the position of the last element of the first part
 
@@ -353,7 +353,7 @@ int mpi_partition(data_t* data, int start, int end, compare_t cmp_ge, void* pivo
 }
 
 
-void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm){
+void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm){
     int rank, num_procs;
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &num_procs);
@@ -380,7 +380,7 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
         }
         MPI_Bcast(pivot, 1, MPI_DATA_T, 0, comm);
         (void*)pivot;
-        int pivot_pos = mpi_partition(*loc_data, 0, *chunk_size, compare_ge, pivot);
+        int pivot_pos = mpi_partitioning(*loc_data, 0, *chunk_size, compare_ge, pivot);
         free(pivot);
 
         MPI_Comm left_comm, right_comm;
@@ -391,8 +391,8 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
 
         // To avoid deadlock, the pivot process will call the function recursively
         if (num_procs % 2 != 0 && rank == pivot_rank){
-            mpi_quicksort1(loc_data, chunk_size, MPI_DATA_T, left_comm);
-            mpi_quicksort1(loc_data, chunk_size, MPI_DATA_T, right_comm);
+            mpi_quicksort(loc_data, chunk_size, MPI_DATA_T, left_comm);
+            mpi_quicksort(loc_data, chunk_size, MPI_DATA_T, right_comm);
         }
 
         if (rank < pivot_rank || (num_procs % 2 == 0 && rank == pivot_rank)){
@@ -410,7 +410,7 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
             free(*loc_data);
             MPI_Recv(&merged[pivot_pos + 1], recv_elements, MPI_DATA_T, rank + pivot_rank + 1, 0, comm, MPI_STATUS_IGNORE);
             *chunk_size = new_chunk_size;
-            mpi_quicksort1(&merged, chunk_size, MPI_DATA_T, left_comm);
+            mpi_quicksort(&merged, chunk_size, MPI_DATA_T, left_comm);
             *loc_data = merged;
         }
         if (rank > pivot_rank){
@@ -428,7 +428,7 @@ void mpi_quicksort1 (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T
             MPI_Send(&(*loc_data)[0], pivot_pos +1, MPI_DATA_T, rank - (pivot_rank +1), 0, comm);
             free(*loc_data);
             *chunk_size = new_chunk_size;
-            mpi_quicksort1(&merged, chunk_size, MPI_DATA_T, right_comm);
+            mpi_quicksort(&merged, chunk_size, MPI_DATA_T, right_comm);
             *loc_data = merged;
         }
         MPI_Comm_free(&left_comm);
