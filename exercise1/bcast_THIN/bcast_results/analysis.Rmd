@@ -465,3 +465,60 @@ fit.default.log<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize),
                 )
 summary(fit.default.log)
 ```
+
+
+# Regression plane plot
+
+```{r}
+data<- data.frame(
+  log2Latency=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(Latency)))),
+  Processes= as.numeric(unlist(bcast_linear.df %>% filter(Allocation == "core") %>% select(Processes))),
+  log2MessageSize=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(MessageSize))))
+)
+
+# Assuming fit.linear.log is the linear model you want to visualize
+
+# Your existing code for creating the scatter plot
+scatter <- data %>%
+  plot_ly(
+    x = ~log2MessageSize,
+    y = ~Processes,
+    z = ~log2Latency
+  ) %>%
+  add_markers(
+    marker = list(color = "#5d5e63",
+                  line = list(color = "black", width =10),
+                  opacity = 0.2)  # Adjust opacity for data points
+  ) %>%
+  layout(
+    title = "Latency vs Processes for Linear algorithm (Allocation='core')"
+  )
+
+# Create a meshgrid for x and y values
+x_values <- seq(min(data$log2MessageSize), max(data$log2MessageSize), length.out = 100)
+y_values <- seq(min(data$Processes), max(data$Processes), length.out = 100)
+meshgrid <- expand.grid(log2MessageSize = x_values, Processes = y_values)
+
+fit.linear.log<- lm(log2Latency~-1+Processes+log2MessageSize+I(log2MessageSize^2),data)
+# Predict the z values using the linear model
+z_values <- predict(fit.linear.log, newdata = meshgrid)
+
+# Reshape the predicted z values into a matrix
+z_matrix <- matrix(z_values, nrow = length(y_values), ncol = length(x_values), byrow = TRUE)
+
+# Add the regression plane to the scatter plot with lower opacity
+scatter <- scatter %>%
+  add_surface(
+    x = ~x_values,
+    y = ~y_values,
+    z = z_matrix,
+    colorscale = list(showscale = FALSE), # This hides the color scale legend
+    opacity = 1,  # Adjust opacity for the regression plane
+    name = 'Regression Plane'
+  )
+
+# Display the plot
+scatter
+
+```
+
