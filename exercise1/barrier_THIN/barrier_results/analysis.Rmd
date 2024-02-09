@@ -182,6 +182,22 @@ linear_fit<- lm(formula= Latency ~ -1+Processes,
                 )
 summary(linear_fit)
 ```
+Plot the linear model:
+```{r}
+barrier_linear.df$PredictedLatency <- predict(linear_fit)
+barrier_linear.df$ObservedLatency <-barrier_linear.df$Latency
+# Now make the plot
+LinearPlot.df <- tidyr::gather(barrier_linear.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(Hockney.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(LinearPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(LinearPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Linear barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#27AE60")) +
+  theme_minimal()
+```
 
 For the non linear algorithms I noticed that introducing a quadratic term increase the fit:
 
@@ -191,11 +207,46 @@ tree_fit<- lm(formula=Latency ~ -1+Processes+I(Processes^2),
                 )
 summary(tree_fit)
 ```
+
+Plot: 
+
+```{r}
+barrier_tree.df$PredictedLatency <- predict(tree_fit)
+barrier_tree.df$ObservedLatency <-barrier_tree.df$Latency
+# Now make the plot
+TreePlot.df <- tidyr::gather(barrier_tree.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(TreePlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(TreePlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(TreePlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Tree barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#3498DB")) +
+  theme_minimal()
+```
+
 ```{r}
 bruck_fit<- lm(formula= Latency ~ -1+Processes+I(Processes^2),
                 data=barrier_bruck.df %>% filter(Allocation == "core")
                 )
 summary(bruck_fit)
+```
+Plot:
+```{r}
+barrier_bruck.df$PredictedLatency <- predict(bruck_fit)
+barrier_bruck.df$ObservedLatency <-barrier_bruck.df$Latency
+# Now make the plot
+BruckPlot.df <- tidyr::gather(barrier_bruck.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(BruckPlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(BruckPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(BruckPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Bruck barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#E67E22")) +
+  theme_minimal()
 ```
 
 
@@ -204,4 +255,21 @@ default_fit<- lm(formula= Latency ~ -1+Processes+I(Processes^2),
                 data=barrier_default.df %>% filter(Allocation == "core")
                 )
 summary(default_fit)
+```
+
+Plot:
+```{r}
+barrier_default.df$PredictedLatency <- predict(default_fit)
+barrier_default.df$ObservedLatency <-barrier_default.df$Latency
+# Now make the plot
+DefaultPlot.df <- tidyr::gather(barrier_default.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(DefaultPlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(DefaultPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(DefaultPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title ="Default barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#8E44AD")) +
+  theme_minimal()
 ```
