@@ -196,7 +196,9 @@ ggplot(Hockney.df, aes(x = Processes, y = Value, color = Legend)) +
        x = "N. of Processes",
        y = "Lacency(μs)") +
   scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#27AE60")) +
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
 ```
 
 For the non linear algorithms I noticed that introducing a quadratic term increase the fit:
@@ -222,8 +224,10 @@ ggplot(TreePlot.df, aes(x = Processes, y = Value, color = Legend)) +
   labs(title = "Tree barrier: estimated model fit",
        x = "N. of Processes",
        y = "Lacency(μs)") +
-  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#3498DB")) +
-  theme_minimal()
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#3498DB"),) +
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
 ```
 
 ```{r}
@@ -246,7 +250,9 @@ ggplot(BruckPlot.df, aes(x = Processes, y = Value, color = Legend)) +
        x = "N. of Processes",
        y = "Lacency(μs)") +
   scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#E67E22")) +
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
 ```
 
 
@@ -271,5 +277,7 @@ ggplot(DefaultPlot.df, aes(x = Processes, y = Value, color = Legend)) +
        x = "N. of Processes",
        y = "Lacency(μs)") +
   scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#8E44AD")) +
-  theme_minimal()
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
 ```
