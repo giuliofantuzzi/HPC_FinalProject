@@ -129,6 +129,19 @@ int main(int argc, char** argv){
         data[i].data[HOT] = drand48();
     }    
     #endif
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Show the sorted array
+     for (int i = 0; i < n_processes; i++){
+         if (rank == i){
+             printf("---------------------------------------\n");
+             printf("Process %d has generated:\n", rank);
+             show_array(data, 0, chunk_size, 0);
+             printf("---------------------------------------\n");
+         }
+         MPI_Barrier(MPI_COMM_WORLD);
+    }
 
     //.................................................................................................
     // (3) SORT THE DATA AND MEASURE TIME
@@ -154,7 +167,7 @@ int main(int argc, char** argv){
      for (int i = 0; i < n_processes; i++){
          if (rank == i){
     	     printf("---------------------------------------\n");
-             printf("\nProcess %d has sorted:\n", rank); 
+             printf("Process %d has sorted:\n", rank); 
              show_array(data, 0, chunk_size, 0);
 	     printf("---------------------------------------\n");
          }

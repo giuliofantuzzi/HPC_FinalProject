@@ -17,5 +17,5 @@ mpicc -fopenmp quick_mpi.c -o quick_mpi
 #export OMP_PROC_BIND=close
 export OMP_NUM_THREADS=2
 
-mpirun -np 5 ./quick_mpi 113
+mpirun -np 5 ./quick_mpi 31
 rm quick_mpi
