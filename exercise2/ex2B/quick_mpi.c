@@ -115,7 +115,7 @@ int main(int argc, char** argv){
         short int seeds[3] = {seed-me, seed+me, seed+me*2};
 
     #pragma omp for
-        for ( int i = 0; i < N; i++ )
+        for ( int i = 0; i < chunk_size; i++ )
         data[i].data[HOT] = erand48( seeds );
     }
     #else
@@ -125,7 +125,7 @@ int main(int argc, char** argv){
         
         PRINTF("ssed is % ld\n", seed);
         
-        for ( int i = 0; i < N; i++ )
+        for ( int i = 0; i < chunk_size; i++ )
         data[i].data[HOT] = drand48();
     }    
     #endif
@@ -153,28 +153,38 @@ int main(int argc, char** argv){
     // Show the sorted array
      for (int i = 0; i < n_processes; i++){
          if (rank == i){
+    	     printf("---------------------------------------\n");
              printf("\nProcess %d has sorted:\n", rank); 
              show_array(data, 0, chunk_size, 0);
+	     printf("---------------------------------------\n");
          }
          MPI_Barrier(MPI_COMM_WORLD);
     }
+    //MPI_Barrier(MPI_COMM_WORLD)
     // Verify the results
-    //int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
-    //int global_check = 0;
-    //MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    int global_check = 0;
+    MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     
-    //if (rank == 0){
-        //if (global_check == n_processes){
-            //printf("Array sorted correctly :)\n");
-	    //printf("Execution time: %f\n", time);
-        //} else {
-            //printf("The array has not been sorted correctly :(\n");
-        //}
-    //}
+    if (rank == 0){
+        printf("\n");
+	if (global_check == n_processes){
+	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	    printf("Array sorted correctly :)\n");
+	    printf("Execution time: %f\n", time);
+	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        } else {
+	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            printf("The array has not been sorted correctly :(\n");
+       	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+        }
+    }
 
     //.................................................................................................
     // (4) FINALIZATION 
     //.................................................................................................
+    MPI_Barrier(MPI_COMM_WORLD);
     free(data);
     MPI_Type_free(&MPI_DATA_T);
     int finalize_retcode = MPI_Finalize();
