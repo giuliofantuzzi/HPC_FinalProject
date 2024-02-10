@@ -151,26 +151,26 @@ int main(int argc, char** argv){
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Show the sorted array
-    // for (int i = 0; i < n_processes; i++){
-    //     if (rank == i){
-    //         printf("Process %d has sorted:\n", rank);
-    //         show_array(data, 0, chunk_size, 0);
-    //     }
-    //     MPI_Barrier(MPI_COMM_WORLD);
-    // }
-    // Verify the results
-    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
-    int global_check = 0;
-    MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if (rank == 0){
-        if (global_check == n_processes){
-            printf("Array sorted correctly :)\n
-                    Execution time: %f\n", time);
-        } else {
-            printf("The array has not been sorted correctly :(\n");
-        }
+     for (int i = 0; i < n_processes; i++){
+         if (rank == i){
+             printf("\nProcess %d has sorted:\n", rank); 
+             show_array(data, 0, chunk_size, 0);
+         }
+         MPI_Barrier(MPI_COMM_WORLD);
     }
+    // Verify the results
+    //int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
+    //int global_check = 0;
+    //MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    //if (rank == 0){
+        //if (global_check == n_processes){
+            //printf("Array sorted correctly :)\n");
+	    //printf("Execution time: %f\n", time);
+        //} else {
+            //printf("The array has not been sorted correctly :(\n");
+        //}
+    //}
 
     //.................................................................................................
     // (4) FINALIZATION 
@@ -451,35 +451,39 @@ int verify_sorting( data_t *data, int start, int end, int not_used )
 // Global version
 int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs, int not_used )
 {
-    // First I check that the local array is sorted
-    verify_sorting( loc_data, start, end, not_used );
+    // First check that the local array is sorted
+    if(verify_sorting( loc_data, start, end, not_used )){
 
-    // Then I check that the last element of the local array is less than or equal to the first element of the next process
-    if (rank >= 0 && rank < num_procs - 1) {
-        // Send the last element of loc_data to the next process (rank + 1)
-        if (end - start > 0)
-            MPI_Send(&loc_data[end - start - 1], 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
-        else{
-            // If the array is empty, send a dummy element
-            data_t dummy;
-            // To access the index's element of the dummy array
-            // dummy[index].data[HOT]
-            dummy.data[HOT] = -1;
-            MPI_Send(&dummy, 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
+        // Then I check that the last element of the local array is less than or equal to the first element of the next process
+        if (rank >= 0 && rank < num_procs - 1) {
+	    // Send the last element of loc_data to the next process (rank + 1)
+	    if (end - start > 0)
+	        MPI_Send(&loc_data[end - 1], 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
+	    else{
+	        // If the array is empty, send a dummy element
+	        data_t dummy;
+	        // To access the index's element of the dummy array
+	        // dummy[index].data[HOT]
+	        dummy.data[HOT] = -1;
+	        MPI_Send(&dummy, 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
+ 	    }
         }
-    }
 
-    if (rank >0 && rank <= num_procs - 1) {
-        data_t prev_last;
-        // Receive the last element from the previous process (rank - 1)
-        MPI_Recv(&prev_last, 1, MPI_DATA_T, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (rank >0 && rank < num_procs) {
+	    data_t prev_last;
+	    // Receive the last element from the previous process (rank - 1)
+	    MPI_Recv(&prev_last, 1, MPI_DATA_T, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // Check if the first element of the current process is greater than or equal to the last element of the previous process
-        if (loc_data[0].data[HOT] > prev_last.data[HOT]) {
-            // If not sorted, return 0
-            return 0;
+	    // Check if the first element of the current process is lower than the last element of the previous process
+	    if (loc_data[0].data[HOT] < prev_last.data[HOT]) {
+	        // If not sorted, return 0
+	        return 0;
+	    }
         }
+        // If we arrived here, everything is sorted :)
+        return 1;
     }
-    // If everything is fine, return 1 to indicate global sorting
-    return 1;
+    else{
+        return 0;
+    }
 }
