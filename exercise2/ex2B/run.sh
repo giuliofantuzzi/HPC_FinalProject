@@ -1,14 +1,21 @@
 #!/bin/bash
+#SBATCH --no-requeue
+#SBATCH --job-name="MPI-W_scalability"
+#SBATCH --get-user-env
+#SBATCH --partition=THIN
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=16
-#SBATCH --time=01:00:00
-#SBATCH --partition=EPYC
-#SBATCH --job-name=HPC_ex2
+#SBATCH --exclusive
+#SBATCH --time=02:00:00
+#SBATCH --nodelist=thin[010]
 
-module load openMPI/4.1.5/gnu/12.2.1
-#export OMPI_MCA_pml=ucx
+module load architecture/Intel
+module load openMPI/4.1.4/gnu/12.2.1
 
+mpicc -fopenmp try.c -o try.x
+
+export OMP_PLACES=cores
+export OMP_PROC_BIND=close
 export OMP_NUM_THREADS=2
-#export PSM3_MULTI_EP=1
-mpirun -np 7 quick_mpi_omp 144
+
+mpirun -np 4 try.x 100
 
