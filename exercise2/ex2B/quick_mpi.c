@@ -133,27 +133,26 @@ int main(int argc, char** argv){
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Show the sorted array
-    for (int i = 0; i < n_processes; i++){
-         if (rank == i){
-             printf("---------------------------------------\n");
-             printf("Process %d has generated:\n", rank);
-             show_array(data, 0, chunk_size, 0);
-             printf("---------------------------------------\n");
-         }
-         MPI_Barrier(MPI_COMM_WORLD);
-    }
+    // for (int i = 0; i < n_processes; i++){
+    //      if (rank == i){
+    //          printf("---------------------------------------\n");
+    //          printf("Process %d has generated:\n", rank);
+    //          show_array(data, 0, chunk_size, 0);
+    //          printf("---------------------------------------\n");
+    //      }
+    //      MPI_Barrier(MPI_COMM_WORLD);
+    // }
 
     //.................................................................................................
     // (3) SORT THE DATA AND MEASURE TIME
     //.................................................................................................
 
     // Wait all processes to finish generating the data
-    MPI_Barrier(MPI_COMM_WORLD);
     double t_start, t_end;
+    MPI_Barrier(MPI_COMM_WORLD);
     t_start= MPI_Wtime();
-
     mpi_quicksort(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD);
-    
+    MPI_Barrier(MPI_COMM_WORLD);
     t_end = MPI_Wtime();
     double time = t_end - t_start;
     
@@ -162,15 +161,15 @@ int main(int argc, char** argv){
     //.................................................................................................
 
     //MPI_Barrier(MPI_COMM_WORLD);
-    for (int i = 0; i < n_processes; i++){
-         if (rank == i){
-             printf("---------------------------------------\n");
-             printf("Process %d has sorted:\n", rank);
-             show_array(data, 0, chunk_size, 0);
-             printf("---------------------------------------\n");
-         }
-         MPI_Barrier(MPI_COMM_WORLD);
-    }
+    // for (int i = 0; i < n_processes; i++){
+    //      if (rank == i){
+    //          printf("---------------------------------------\n");
+    //          printf("Process %d has sorted:\n", rank);
+    //          show_array(data, 0, chunk_size, 0);
+    //          printf("---------------------------------------\n");
+    //      }
+    //      MPI_Barrier(MPI_COMM_WORLD);
+    // }
     //MPI_Barrier(MPI_COMM_WORLD)
     // Verify the results
     int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
