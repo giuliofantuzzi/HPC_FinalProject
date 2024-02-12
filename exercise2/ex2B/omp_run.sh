@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --exclusive
 #SBATCH --time=02:00:00
-#SBATCH --nodelist=epyc[005]
+#SBATCH --nodelist=epyc[007]
 
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1

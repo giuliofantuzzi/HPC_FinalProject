@@ -1,0 +1,26 @@
+Lmod Warning: The architecture selection module has been deprecated. The
+module system will now autonomously handle the proper selection of binaries. 
+While processing the following module(s):
+    Module fullname   Module Filename
+    ---------------   ---------------
+    architecture/AMD  /orfeo/opt/modules/profiles/architecture/AMD.lua
+
+Benchmarking serial version
+ssed is  0
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Array sorted correctly :)
+Execution time: 2.119712
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Benchmarking omp version
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Array sorted correctly :)
+Execution time: 2.175016
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Benchmarking MPI version
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Array sorted correctly :)
+Execution time: 0.168483
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

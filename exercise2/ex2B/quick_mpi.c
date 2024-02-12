@@ -198,9 +198,8 @@ int main(int argc, char** argv){
     free(data);
     MPI_Type_free(&MPI_DATA_T);
     int finalize_retcode = MPI_Finalize();
-    fprintf(stderr, "Process, return_code\n");
-    fprintf(stderr, "%i, %i\n", rank, finalize_retcode);
-
+    //fprintf(stderr, "Process, return_code\n");
+    //fprintf(stderr, "%i, %i\n", rank, finalize_retcode);
     return 0;
 }
 
