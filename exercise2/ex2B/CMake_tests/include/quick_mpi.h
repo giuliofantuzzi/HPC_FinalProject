@@ -51,7 +51,7 @@ compare_t compare_ge;
 verify_t verify_partitioning;
 verify_t verify_sorting;
 verify_t show_array;
-extern inline int partitioning(data_t*, int, int, compare_t);
+int partitioning(data_t*, int, int, compare_t);
 int mpi_partitioning(data_t*, int, int, compare_t, void*);
 void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm);
 int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);

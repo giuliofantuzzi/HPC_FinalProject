@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/main.x.dir/source/quick_mpi.c.o CMakeFiles/main.x.dir/main.c.o -o /u/dssc/gfantuzzi/HPC_FinalProject/exercise2/ex2B/test/exe/main.x  -Wl,-rpath,/orfeo/cephfs/opt/programs/intel/fedora37/openMPI/4.1.5/lib /orfeo/cephfs/opt/programs/intel/fedora37/openMPI/4.1.5/lib/libmpi_cxx.so /orfeo/cephfs/opt/programs/intel/fedora37/openMPI/4.1.5/lib/libmpi.so -lgomp 
