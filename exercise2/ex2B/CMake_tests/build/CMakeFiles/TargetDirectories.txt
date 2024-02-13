@@ -1,3 +1,0 @@
-/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/ex2B/test/build/CMakeFiles/main.x.dir
-/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/ex2B/test/build/CMakeFiles/edit_cache.dir
-/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/ex2B/test/build/CMakeFiles/rebuild_cache.dir
