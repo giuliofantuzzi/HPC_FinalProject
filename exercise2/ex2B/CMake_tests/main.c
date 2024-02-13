@@ -9,18 +9,18 @@ int main(int argc, char** argv){
     //.................................................................................................
 
     int N = SIZE;
-    int nthreads;
+    //int nthreads;
     // {
     //     int a = 0;
     //     if ( argc > ++a ) N = atoi(*(argv+a));
     // }
     if ( argc > 1 ) N = atoi(*(argv+1));
-    char* env_var = getenv("OMP_NUM_THREADS");
-    if (env_var != NULL) {
-        int nthreads = atoi(env_var);
-    } else {
-        printf("OMP_NUM_THREADS environment variable not set :(\n");
-    }
+    //char* env_var = getenv("OMP_NUM_THREADS");
+    //if (env_var != NULL) {
+    //    int nthreads = atoi(env_var);
+    //} else {
+    //    printf("OMP_NUM_THREADS environment variable not set :(\n");
+    //}
 
     int n_processes, rank;
     int mpi_err = MPI_Init(&argc, &argv);

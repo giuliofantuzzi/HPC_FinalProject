@@ -199,8 +199,8 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
 
             int minor_partition_left; // 1 if the minor partition of the chunk is the left one, 0 if it is the right one
             int minor_partition_size;
-            data_t* minor_partition; 
-            data_t* maj_partition;           
+            data_t* minor_partition=NULL; 
+            data_t* maj_partition=NULL;           
 
             if((rank == pivot_rank)){
                 int pivot_pos = mpi_partitioning(*loc_data, 0, *chunk_size, compare_ge, pivot);
@@ -343,7 +343,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         int pivot_pos = mpi_partitioning(*loc_data, 0, *chunk_size, compare_ge, pivot);
         free(pivot);
         
-        data_t* merged;
+        //data_t* merged=NULL;
         if (rank < pivot_rank || (num_procs % 2 == 0 && rank == pivot_rank)){ //
             int elements_to_send = *chunk_size - (pivot_pos + 1);
             MPI_Send(&elements_to_send, 1, MPI_INT, rank + pivot_rank + 1, 0, comm);

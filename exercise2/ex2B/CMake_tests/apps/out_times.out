@@ -9,17 +9,17 @@ Benchmarking serial version
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Array sorted correctly :)
-Execution time: 2.108121
+Execution time: 0.116124
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Benchmarking omp version
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Array sorted correctly :)
-Execution time: 2.188980
+Execution time: 0.120277
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Benchmarking MPI version
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Array sorted correctly :)
-Execution time: 0.168406
+Execution time: 0.035735
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

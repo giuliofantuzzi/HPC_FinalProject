@@ -1,17 +1,18 @@
-# General settings
+#General settings
 cmake_minimum_required(VERSION  3.5)
 project(HPC_Exam_ex2B)
 
 # Local variables
 set(INCLUDE_DIRS "include/")
 set(SRC_DIRS "source/")
-set(EXE_DIRS "exe/")
+set(EXE_DIRS "apps/")
 
 set(INCLUDE_FILES "quick_mpi.h")
 set(SRC_FILES "quick_mpi.c")
 set(MAIN_FILE "main.c")
 set(EXE_FILE "main.x")
 
+set(CMAKE_C_FLAGS "-Wall -O3")
 # Find MPI and OpenMP
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})

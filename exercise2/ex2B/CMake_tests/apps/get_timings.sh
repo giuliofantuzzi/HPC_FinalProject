@@ -4,15 +4,17 @@
 #SBATCH --get-user-env
 #SBATCH --partition=EPYC
 #SBATCH --nodes=1
-#SBATCH --exclusive
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=16
+##SBATCH --exclusive
 #SBATCH --time=02:00:00
-#SBATCH --nodelist=epyc[007]
+##SBATCH --nodelist=epyc[007]
 #SBATCH --output=out_times.out
 
 
 exe="./main.x"
 N=100000
-MPI_procs=32
+MPI_procs=16
 OMP_threads=8
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
