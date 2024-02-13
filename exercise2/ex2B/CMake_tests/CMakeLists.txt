@@ -12,7 +12,7 @@ set(SRC_FILES "quick_mpi.c")
 set(MAIN_FILE "main.c")
 set(EXE_FILE "main.x")
 
-set(CMAKE_C_FLAGS "-Wall -O3")
+set(CMAKE_C_FLAGS "-O3 -march=native")
 # Find MPI and OpenMP
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
