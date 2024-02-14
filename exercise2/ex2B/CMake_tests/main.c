@@ -1,27 +1,24 @@
 #include "quick_mpi.h"
-// ================================================================
-//  MAIN 
-// ================================================================
-int main(int argc, char** argv){
 
+int main(int argc, char** argv){
     //.................................................................................................
     // (1) INITIALIZATION 
     //.................................................................................................
 
+    // Size of the "full" array
     int N = SIZE;
-    //int nthreads;
-    // {
-    //     int a = 0;
-    //     if ( argc > ++a ) N = atoi(*(argv+a));
-    // }
     if ( argc > 1 ) N = atoi(*(argv+1));
-    //char* env_var = getenv("OMP_NUM_THREADS");
-    //if (env_var != NULL) {
-    //    int nthreads = atoi(env_var);
-    //} else {
-    //    printf("OMP_NUM_THREADS environment variable not set :(\n");
-    //}
+    
+    // Set the number of threads
+    char* env_var = getenv("OMP_NUM_THREADS");
+    if (env_var != NULL) {
+       omp_set_num_threads(atoi(env_var));
+    } else {
+       printf("OMP_NUM_THREADS env variable not set : default is 1 \n");
+       omp_set_num_threads(1);
+    }
 
+    // Initialize MPI
     int n_processes, rank;
     int mpi_err = MPI_Init(&argc, &argv);
 
@@ -38,11 +35,12 @@ int main(int argc, char** argv){
     MPI_Type_commit(&MPI_DATA_T);
 
     //.................................................................................................
-    //  (2) GENERATE PROCESS CHUNK OF DATA
+    //  (2) GENERATE CHUNK OF DATA FOR THE PROCESS
     //.................................................................................................
 
     int chunk_size = (rank < N % n_processes) ? N / n_processes + 1 : N / n_processes;
     data_t *data = (data_t*)malloc(chunk_size*sizeof(data_t));
+    
     // set a seed depending on the process rank
     long int seed = rank;
     #if defined(_OPENMP)
@@ -97,18 +95,6 @@ int main(int argc, char** argv){
     // (4) VERIFY THE SORTING
     //.................................................................................................
 
-    //MPI_Barrier(MPI_COMM_WORLD);
-    // for (int i = 0; i < n_processes; i++){
-    //      if (rank == i){
-    //          printf("---------------------------------------\n");
-    //          printf("Process %d has sorted:\n", rank);
-    //          show_array(data, 0, chunk_size, 0);
-    //          printf("---------------------------------------\n");
-    //      }
-    //      MPI_Barrier(MPI_COMM_WORLD);
-    // }
-    //MPI_Barrier(MPI_COMM_WORLD)
-    // Verify the results
     int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
     MPI_Barrier(MPI_COMM_WORLD);
     int global_check = 0;
@@ -127,7 +113,6 @@ int main(int argc, char** argv){
        	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         }
     }
-
     //.................................................................................................
     // (4) FINALIZATION 
     //.................................................................................................

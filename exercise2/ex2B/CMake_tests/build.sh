@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --no-requeue
-#SBATCH --job-name="EX02_compilation"
+#SBATCH --job-name="EX2B_compilation"
 #SBATCH --get-user-env
 #SBATCH --partition=EPYC
 #SBATCH --nodes=1
