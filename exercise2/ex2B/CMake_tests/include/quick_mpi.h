@@ -53,7 +53,7 @@ verify_t verify_sorting;
 verify_t show_array;
 int partitioning(data_t*, int, int, compare_t);
 int mpi_partitioning(data_t*, int, int, compare_t, void*);
-void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm);
+void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm,compare_t cmp_ge);
 int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);
 
 // SERIAL QUICKSORT
