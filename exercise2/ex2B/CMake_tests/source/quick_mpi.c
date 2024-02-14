@@ -283,7 +283,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             // MPI_Scatterv(&minor_partition[0], sendcounts, displs, MPI_DATA_T, &local_minor_partition[0], sendcounts[rank], MPI_DATA_T, pivot_rank, comm);
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // print if scatterv for successfull for rank
-            printf("rank %d has received from scatterv\n",rank);
+            //printf("rank %d has received from scatterv\n",rank);
             
             // Merge the local_minor_partition with the loc_data
             *loc_data = (data_t*)realloc(*loc_data, (*chunk_size + sendcounts[rank]) * sizeof(data_t));

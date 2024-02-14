@@ -11,9 +11,9 @@
 
 
 exe="./main.x"
-N=10000000
-MPI_procs=64
-OMP_threads=8
+N=1000000
+MPI_procs=24
+OMP_threads=4
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 
