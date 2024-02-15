@@ -31,6 +31,9 @@
 //                   (double)ts.tv_nsec * 1e-9)
 // #endif
 
+#if !defined(SIZE_L1)
+#define SIZE_L1 65536
+#endif
 
 #if defined(DEBUG)
 #define VERBOSE
@@ -97,4 +100,5 @@ int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);
 void serial_quicksort( data_t *, int, int, compare_t ); 
 // OMP QUICKSORT
 void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
-
+// OMP L1 QUICKSORT
+void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge);

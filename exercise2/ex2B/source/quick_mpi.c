@@ -100,7 +100,7 @@ void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
         int mid = partitioning(data, start, end, cmp_ge);
         // Use OpenMP to parallelize the recursive calls
         CHECK; 
-	    #pragma omp task
+	#pragma omp task
         {
             omp_quicksort(data, start, mid, cmp_ge);
         }
@@ -120,6 +120,36 @@ void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     }
 }
 
+void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge) {
+    int size = end - start;
+    if (size > 2) {
+        int mid = partitioning(data, start, end, cmp_ge);
+        // Use OpenMP to parallelize the recursive calls
+        CHECK;
+	if(size>SIZE_L1){
+            #pragma omp task
+            {
+                omp_quicksort(data, start, mid, cmp_ge);
+            }
+            #pragma omp task
+            {
+                // Sort the right half
+                //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
+                omp_quicksort(data, mid +  1, end, cmp_ge);
+            }
+	}
+	else{
+	    serial_quicksort(data,start,mid,cmp_ge);
+	    serial_quicksort(data,mid+1,end,cmp_ge);
+	}
+    }
+    else {
+        // Handle small subarrays sequentially
+        if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
+            SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
+        }
+    }
+}
 #endif
 
 
@@ -176,7 +206,9 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
 		#pragma omp parallel
             	{
                     #pragma omp single
-		        omp_quicksort(pivots, 0, num_procs, cmp_ge);
+		    //omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
+		    omp_quicksort(pivots, 0, num_procs, cmp_ge);
+		    #pragma omp taskwait
 		}
 	    #else
 		serial_quicksort(pivots, 0, num_procs, cmp_ge);
@@ -384,7 +416,9 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             #pragma omp parallel
             {
                 #pragma omp single
-                omp_quicksort(*loc_data, 0, *chunk_size, cmp_ge);
+                //omp_quicksort_L1(*loc_data, 0, *chunk_size, cmp_ge);
+		omp_quicksort(*loc_data, 0, *chunk_size, cmp_ge);
+		#pragma omp taskwait
             }
         #else
             serial_quicksort(*loc_data, 0, *chunk_size, cmp_ge);

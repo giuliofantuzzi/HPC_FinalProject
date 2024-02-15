@@ -11,9 +11,9 @@
 
 csv="../timings/timings_64M.csv"
 exe="./main.x"
-N=64000000
-MPI_procs=16
-OMP_threads=4
+N=64000
+MPI_procs=4
+OMP_threads=2
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 

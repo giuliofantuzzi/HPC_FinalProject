@@ -1,5 +1,6 @@
 .DS_Store
 osu-micro-benchmarks-7.3.tar.gz
 osu-micro-benchmarks-7.3
-osu-micro-benchmarks-7.3-THIN
 .Rhistory
+main.x
+build/
