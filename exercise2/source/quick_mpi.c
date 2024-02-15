@@ -206,8 +206,8 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
 		#pragma omp parallel
             	{
                     #pragma omp single
-		    //omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
-		    omp_quicksort(pivots, 0, num_procs, cmp_ge);
+		    omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
+		    //omp_quicksort(pivots, 0, num_procs, cmp_ge);
 		    #pragma omp taskwait
 		}
 	    #else
@@ -416,8 +416,8 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             #pragma omp parallel
             {
                 #pragma omp single
-                //omp_quicksort_L1(*loc_data, 0, *chunk_size, cmp_ge);
-		omp_quicksort(*loc_data, 0, *chunk_size, cmp_ge);
+                omp_quicksort_L1(*loc_data, 0, *chunk_size, cmp_ge);
+		//omp_quicksort(*loc_data, 0, *chunk_size, cmp_ge);
 		#pragma omp taskwait
             }
         #else

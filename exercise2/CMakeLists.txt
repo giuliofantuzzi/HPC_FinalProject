@@ -3,7 +3,8 @@
 cmake_minimum_required(VERSION  3.5)
 project(HPC-Exam-Ex2B
         DESCRIPTION "High Performance Computing - Exam - Exercise 2B"
-        VERSION 1.0)
+        VERSION 1.0
+	LANGUAGES C)
 set(CMAKE_C_FLAGS "-O3 -march=native")
 #----------------------------------------------------------------------------------------------------------
 # Local variables
