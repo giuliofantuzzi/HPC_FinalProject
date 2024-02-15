@@ -6,16 +6,20 @@ int main(int argc, char** argv){
     //.................................................................................................
 
     // Size of the "full" array
-    int N = SIZE;
+    int N = N_dflt;
     if ( argc > 1 ) N = atoi(*(argv+1));
     
     // Set the number of threads
     char* env_var = getenv("OMP_NUM_THREADS");
+    int n_threads;
     if (env_var != NULL) {
+       //printf("Main entered with %c threads",*env_var);
        omp_set_num_threads(atoi(env_var));
+       n_threads=atoi(env_var);
     } else {
-       printf("OMP_NUM_THREADS env variable not set : default is 1 \n");
+       //printf("OMP_NUM_THREADS env variable not set : default is 1 \n");
        omp_set_num_threads(1);
+       n_threads=1;
     }
 
     // Initialize MPI
@@ -103,14 +107,15 @@ int main(int argc, char** argv){
     if (rank == 0){
         printf("\n");
 	if (global_check == n_processes){
-	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	    printf("Array sorted correctly :)\n");
-	    printf("Execution time: %f\n", time);
-	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	    //printf("Array sorted correctly :)\n");
+	    //printf("Execution time: %f\n", time);
+	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	    printf("%d,%d,%f\n",n_processes,n_threads,time);
         } else {
-	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             printf("The array has not been sorted correctly :(\n");
-       	    printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+       	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         }
     }
     //.................................................................................................
