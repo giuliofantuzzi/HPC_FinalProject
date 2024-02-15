@@ -100,18 +100,15 @@ void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
         int mid = partitioning(data, start, end, cmp_ge);
         // Use OpenMP to parallelize the recursive calls
         CHECK; 
-	#pragma omp task
+	    #pragma omp task
         {
-          // Sort the left half
-	  //printf("LEFT Recursive call by thread %d\n",omp_get_thread_num());
-          omp_quicksort(data, start, mid, cmp_ge);
-         }
-	
-         #pragma omp task
-         {
-          // Sort the right half
-          //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
-	  omp_quicksort(data, mid +  1, end, cmp_ge);
+            omp_quicksort(data, start, mid, cmp_ge);
+        }
+        #pragma omp task
+        {
+            // Sort the right half
+            //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
+	        omp_quicksort(data, mid +  1, end, cmp_ge);
          }
         }
     	
