@@ -1,8 +1,38 @@
-# Exercise 2a
+# Exercise 2B
 
-Implementation of the broadcast algorithm both in distributed memory and in shared memory
+## Student's info
 
-- Distributed memory implementation with an MPI code using *point-to-point* calls ONLY
-- Shared memory implementation with an OpenMP code
+| Name | Surname | Student ID | UniTs email | Personal email | Course |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| Giulio | Fantuzzi | SM3800012 | GIULIO.FANTUZZI@studenti.units.it | giulio.fantuzzi01@gmail.com | DSAI|
 
-**Note** : for distributed memory implementation I can also implement a hybrid code...think about it
+## Project structure
+
+```
+📂 ex2B/
+│ 
+├── 📂 apps/
+│   ├── 📄 main.c
+│   └── 📄 quick.c
+│
+├── 📂 include/
+│   └── 📄 quick_mpi.h
+│
+├── 📂 source/
+│   └── 📄 quick_mpi.c
+│
+├── 📂 timings/
+│   ├── 📄 ...
+│   └── 📄 ...
+│
+├── 📒 .gitignore
+│
+├── 🏗️ build.sh
+│
+├── ⏰ timings.sh
+│
+├── 📝 CMakeLists.txt
+│
+└── 📰 README.md
+
+```

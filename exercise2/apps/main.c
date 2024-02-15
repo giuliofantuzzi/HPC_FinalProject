@@ -111,7 +111,7 @@ int main(int argc, char** argv){
 	    //printf("Array sorted correctly :)\n");
 	    //printf("Execution time: %f\n", time);
 	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	    printf("%d,%d,%f\n",n_processes,n_threads,time);
+	    printf("%d,%d,%f",n_processes,n_threads,time);
         } else {
 	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             printf("The array has not been sorted correctly :(\n");
