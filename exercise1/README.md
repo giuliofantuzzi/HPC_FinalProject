@@ -3,7 +3,7 @@
 ## Table of contents
 - [Project structure](#project-structure)
 - [Osu-micro-benchmarks 7.3 installation](#osu-micro-benchmarks-73-installation)
-    - [Automatized compilation](#automatized-compilation)
+    - [Automatic compilation](#automatic-compilation)
     - [Manual compilation](#manual-compilation)
 - [Data gathering](#data-gathering)
 
@@ -74,7 +74,7 @@ wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.
 For the automatic compilation [click here](#automatized-compilation) \
 For the manual compilation [skip here](#manual-compilation)
 
-## Automatized Compilation
+## Automatic Compilation
 
 I provided you a bash script to compile the OSU library automatically on ORFEO: `compile_OSU-THIN.sh`. Just run it with:
 

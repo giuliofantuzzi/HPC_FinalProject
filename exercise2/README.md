@@ -1,4 +1,4 @@
-# Exercise 2B
+# HPC Final Project: Exercise 2B
 
 ## Table of contents
 - [Project structure](#project-structure)
