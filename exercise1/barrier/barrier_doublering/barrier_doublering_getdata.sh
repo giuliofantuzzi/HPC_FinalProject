@@ -17,7 +17,7 @@ map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../barrier_results/barrier_recursivedoubling.csv"
+out_csv="../results_barrier/barrier_doublering.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,Latency" > $out_csv
@@ -26,8 +26,8 @@ echo "Algorithm,Allocation,Processes,Latency" > $out_csv
 for map in $map_values; do
   for np in $np_values; do
     # Run the mpirun command
-    echo "...Benchmarking Recursive Doubling Barrier with map=$map and np=$np..."
-    mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 3 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
-    | awk -v map="$map" -v np="$np" '{printf "RecursiveDoubling,%s,%s,%s\n",map,np,$1}' >> $out_csv
+    echo "...Benchmarking Double Ring Barrier with map=$map and np=$np..."
+    mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 2 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
+    | awk -v map="$map" -v np="$np" '{printf "DoubleRing,%s,%s,%s\n",map,np,$1}' >> $out_csv
   done
 done

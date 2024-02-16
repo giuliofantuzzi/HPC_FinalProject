@@ -17,7 +17,7 @@ map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../barrier_results/barrier_linear.csv"
+out_csv="../results_barrier/barrier_linear.csv"
 
 # Create the CSV file with header
 echo "Algorithm,Allocation,Processes,Latency" > $out_csv

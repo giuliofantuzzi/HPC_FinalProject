@@ -9,26 +9,25 @@
 
 # Load the openMPI module
 module load openMPI/4.1.5/gnu
-export OMPI_MCA_pml=ucx
 
 # Define the range of np values
-np_values=$(seq 2 1 48)
+np_values=$(seq 2 2 48)
 # Define the range of map values
 map_values="core socket node"
 
 # Define filepaths
 src_path="../../osu-micro-benchmarks-7.3/c/mpi/collective/blocking/"
-out_csv="../bcast_results_bind/bcast_binarytree.csv"
+out_csv="../results_barrier/barrier_recursivedoubling.csv"
 
 # Create the CSV file with header
-echo "Algorithm,Allocation,Processes,MessageSize,Latency" > $out_csv
+echo "Algorithm,Allocation,Processes,Latency" > $out_csv
 
 # Iterate over map and np values
 for map in $map_values; do
   for np in $np_values; do
     # Run the mpirun command
-    echo "...Benchmarking BinaryTree with map=$map and np=$np..."
-    mpirun -np $np -map-by $map --bind-to core --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_bcast_algorithm 5 ${src_path}osu_bcast -x 1000 -i 10000 | tail -n 21 \
-    | awk -v np="$np" -v map="$map" '{printf "BinaryTree,%s,%s,%s,%s\n",map,np,$1, $2}' | sed 's/,$//' >> $out_csv
+    echo "...Benchmarking Recursive Doubling Barrier with map=$map and np=$np..."
+    mpirun -np $np -map-by $map --mca coll_tuned_use_dynamic_rules true --mca coll_tuned_barrier_algorithm 3 ${src_path}osu_barrier -x 1000 -i 10000 | tail -n 1 \
+    | awk -v map="$map" -v np="$np" '{printf "RecursiveDoubling,%s,%s,%s\n",map,np,$1}' >> $out_csv
   done
 done
