@@ -1,0 +1,121 @@
+---
+title: "OMP Scalability"
+author: Giulio Fantuzzi
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Comparison between classical and L1 version
+
+These data are referred to a total size of $N=64.000.000$
+
+Data without L1 improvement:
+
+```{r}
+omp_timings<- read.csv("../timings/omp_scaling.csv")
+omp_timings<- omp_timings%>%
+  group_by(Threads) %>%
+  summarise(Time = min(Time, na.rm = TRUE))
+omp_timings$SpeedUp<- omp_timings$Time[1] / omp_timings$Time
+omp_timings$Type= "Standard"
+```
+
+With L1 improvement:
+```{r}
+omp_timings_L1<- read.csv("../timings/omp_scaling_L1.csv")
+omp_timings_L1<- omp_timings_L1%>%
+  group_by(Threads) %>%
+  summarise(Time = min(Time, na.rm = TRUE))
+omp_timings_L1$SpeedUp<- omp_timings_L1$Time[1] / omp_timings_L1$Time
+omp_timings_L1$Type= "L1 Optimized"
+```
+
+Combine them into a unique df:
+
+```{r}
+df= rbind(omp_timings,omp_timings_L1)
+df$Type=as.factor(df$Type)
+```
+
+## Time comparison
+
+### Original scale
+
+```{r,echo=FALSE}
+df %>%
+  ggplot(aes(x = Threads, y = Time, color = Type)) +
+  geom_point(size=2)+
+  geom_line() +
+  geom_vline(xintercept = c(2,4,8,16,32,64), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64), y = rep(0,6), label = c(2,4,8,16,32,64), 
+           vjust = 0, hjust = -0.1,color="grey50")+
+    labs(title = "Time vs Threads",
+         x = "Threads",
+         y = "Time") +
+    theme_minimal()
+```
+
+### log2 scale
+
+```{r,echo=FALSE}
+df %>%
+  ggplot(aes(x = log2(Threads), y = log2(Time), color = Type)) +
+  geom_point(size=2)+
+  geom_line() +
+  geom_vline(xintercept = 1:6, linetype = "dashed", color = "grey")+
+  annotate("text", x = 1:6, y = rep(0,6), label = 1:6, 
+           vjust = 0, hjust = -0.1,color="grey50")+
+    labs(title = "log2(Time) vs log2(Threads)",
+         x = "log2(Threads)",
+         y = "log2(Time)") +
+    theme_minimal()
+```
+
+
+## Speed-up comparison
+
+### Original scale
+
+```{r}
+df %>%
+  ggplot(aes(x = Threads, y = SpeedUp, color = Type)) +
+  geom_point(size=2)+
+  geom_line() +
+  geom_vline(xintercept = c(2,4,8,16,32,64), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64), y = rep(0,6), label = c(2,4,8,16,32,64), 
+           vjust = 0, hjust = -0.1,color="grey")+
+  #geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  labs(title = "OMP SpeedUp",
+       x = "Threads",
+       y = "SpeedUp") +
+  ylim(0,10)+
+  theme_minimal()
+```
+
+### log2 scale
+
+```{r}
+df %>%
+  ggplot(aes(x = log2(Threads), y = log2(SpeedUp), color = Type)) +
+  geom_point(size=2)+
+  geom_line() +
+  geom_vline(xintercept = 1:6, linetype = "dashed", color = "grey")+
+  annotate("text", x = 1:6, y = rep(0,6), label = 1:6, 
+           vjust = 0, hjust = -0.1,color="grey")+
+  #geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  labs(title = "OMP SpeedUp",
+       x = "Threads",
+       y = "SpeedUp") +
+  theme_minimal()
+```
