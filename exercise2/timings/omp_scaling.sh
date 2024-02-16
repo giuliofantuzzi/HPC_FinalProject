@@ -8,15 +8,14 @@
 #SBATCH --time=02:00:00
 ##SBATCH --nodelist=epyc[007]
 #SBATCH --output=omp_scaling.out
-
-csv="../timings/omp_scaling_LessSize.csv"
-exe="./main.x"
+#--------------------------------------------------------------------------------
+csv="omp_scaling_LessSize.csv"
+exe="../timings/main.x"
 N=64000000
 #OMP_threads=2
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
-
-
+#--------------------------------------------------------------------------------
 echo "Processes,Threads,Time" > $csv 
 
 for iter in {1..10..1}
@@ -27,3 +26,4 @@ do
         $exe $N >> $csv
     done
 done
+#--------------------------------------------------------------------------------
