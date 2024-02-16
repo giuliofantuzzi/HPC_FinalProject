@@ -5,19 +5,19 @@
 #SBATCH --partition=EPYC
 #SBATCH --nodes=1
 #SBATCH --exclusive
-#SBATCH --time=00:50:00
+#SBATCH --time=00:45:00
 ##SBATCH --nodelist=epyc[007]
 #SBATCH --output=mpi_pure_scaling.out
 
-csv="../timings/hybrid_scaling_240M_1thread.csv"
+csv="../timings/hybrid_scaling_240M_8thread.csv"
 exe="./main.x"
 N=240000000
-#OMP_threads=2
+OMP_threads=8
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 
 
-#echo "Processes,Threads,Time" > $csv 
+echo "Processes,Threads,Time" > $csv 
 
 # serial benchmark
 #export OMP_NUM_THREADS=1
@@ -27,7 +27,7 @@ module load openMPI/4.1.5/gnu/12.2.1
 #done
 
 # hybrid benchmark
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=$OMP_threads
 for p in 2 4 8 16 32 64
 do
     for iter in {1..5..1}
