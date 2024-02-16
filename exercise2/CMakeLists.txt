@@ -15,8 +15,8 @@ set(MAIN_DIRS "apps/")
 set(EXE_DIRS "apps/")
 # Scripts
 set(INCLUDE_FILES "quick_mpi.h")
-set(SRC_FILES "quick_mpi.c")
-set(MAIN_FILE "main.c")
+set(SRC_FILES "quick_mpi.c psrs.c")
+set(MAIN_FILE "main_psrs.c")
 set(EXE_FILE "main.x")
 #----------------------------------------------------------------------------------------------------------
 # Find required packages
