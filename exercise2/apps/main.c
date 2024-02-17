@@ -13,13 +13,12 @@ int main(int argc, char** argv){
     char* env_var = getenv("OMP_NUM_THREADS");
     int n_threads;
     if (env_var != NULL) {
-       //printf("Main entered with %c threads",*env_var);
-       omp_set_num_threads(atoi(env_var));
-       n_threads=atoi(env_var);
+        omp_set_num_threads(atoi(env_var));
+        n_threads=atoi(env_var);
     } else {
-       //printf("OMP_NUM_THREADS env variable not set : default is 1 \n");
-       omp_set_num_threads(1);
-       n_threads=1;
+        // If the environment variable is not set, use only one thread
+        omp_set_num_threads(1);
+        n_threads=1;
     }
 
     // Initialize MPI
@@ -71,17 +70,6 @@ int main(int argc, char** argv){
     
     MPI_Barrier(MPI_COMM_WORLD);
 
-    // Show the sorted array
-    // for (int i = 0; i < n_processes; i++){
-    //      if (rank == i){
-    //          printf("---------------------------------------\n");
-    //          printf("Process %d has generated:\n", rank);
-    //          show_array(data, 0, chunk_size, 0);
-    //          printf("---------------------------------------\n");
-    //      }
-    //      MPI_Barrier(MPI_COMM_WORLD);
-    // }
-
     //.................................................................................................
     // (3) SORT THE DATA AND MEASURE TIME
     //.................................................................................................
@@ -91,7 +79,7 @@ int main(int argc, char** argv){
     MPI_Barrier(MPI_COMM_WORLD);
     t_start= MPI_Wtime();
     mpi_quicksort(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD,compare_ge);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // Wait all processes to finish 
     t_end = MPI_Wtime();
     double time = t_end - t_start;
     
@@ -99,7 +87,7 @@ int main(int argc, char** argv){
     // (4) VERIFY THE SORTING
     //.................................................................................................
 
-    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes, 0);
+    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes);
     MPI_Barrier(MPI_COMM_WORLD);
     int global_check = 0;
     MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -107,15 +95,9 @@ int main(int argc, char** argv){
     if (rank == 0){
         printf("\n");
 	if (global_check == n_processes){
-	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	    //printf("Array sorted correctly :)\n");
-	    //printf("Execution time: %f\n", time);
-	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	    printf("%d,%d,%f",n_processes,n_threads,time);
         } else {
-	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             printf("The array has not been sorted correctly :(\n");
-       	    //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         }
     }
     //.................................................................................................
@@ -124,7 +106,8 @@ int main(int argc, char** argv){
     MPI_Barrier(MPI_COMM_WORLD);
     free(data);
     MPI_Type_free(&MPI_DATA_T);
-    int finalize_retcode = MPI_Finalize();
+    MPI_Finalize();
+    //int finalize_retcode = MPI_Finalize();
     //fprintf(stderr, "Process, return_code\n");
     //fprintf(stderr, "%i, %i\n", rank, finalize_retcode);
     return 0;

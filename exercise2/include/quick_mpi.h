@@ -1,7 +1,9 @@
-/*------------------------------------------------------------------*/
+// ================================================================
+//  LIBRARIES 
+// ================================================================
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+//#include <pthread.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -77,28 +79,26 @@ do { char _temp = *a;*a++ = *b;*b++ = _temp;} while (--sz);} while (0)
 typedef int compare_t(const void *, const void *);
 
 // Define verifying function type, used to test results
-typedef int verify_t(data_t *, int, int, int);
-
+typedef int verify_t(data_t *, int, int);
 
 // ================================================================
 //  FUNCTIONS DECLARATION
 // ================================================================
 
-typedef int compare_t(const void *, const void *);
-typedef int verify_t(data_t *, int, int, int);
 compare_t compare;      
 compare_t compare_ge;   
 verify_t verify_partitioning;
 verify_t verify_sorting;
 verify_t show_array;
+int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int);
 int partitioning(data_t*, int, int, compare_t);
 int mpi_partitioning(data_t*, int, int, compare_t, void*);
-void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm,compare_t cmp_ge);
-int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int, int);
 
-// SERIAL QUICKSORT
+// Serial Quicksort
 void serial_quicksort( data_t *, int, int, compare_t ); 
-// OMP QUICKSORT
-void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge);
-// OMP L1 QUICKSORT
-void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge);
+// OpenMP Quicksort
+void omp_quicksort(data_t*, int, int, compare_t);
+// OpenMP Quicksort with L1 cache optimization
+void omp_quicksort_L1(data_t *, int, int, compare_t);
+// MPI Quicksort
+void mpi_quicksort(data_t**, int*, MPI_Datatype, MPI_Comm,compare_t);

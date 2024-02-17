@@ -427,7 +427,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
 }
 
 // Verify sorting within chunks
-int verify_sorting( data_t *data, int start, int end, int not_used )
+int verify_sorting( data_t *data, int start, int end)
 {
     int i = start+1;
     // substituted <= end with <
@@ -437,10 +437,10 @@ int verify_sorting( data_t *data, int start, int end, int not_used )
 }
 
 // Verify sorting between threads
-int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs, int not_used )
+int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs)
 {
     // First check that the local array is sorted
-    if(verify_sorting( loc_data, start, end, not_used )){
+    if(verify_sorting( loc_data, start, end)){
 
         // Then I check that the last element of the local array is less than or equal to the first element of the next process
         if (rank >= 0 && rank < num_procs - 1) {
