@@ -229,7 +229,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             int minor_partition_left; // 1 if the minor partition of the chunk is the left one, 0 if it is the right one
             int minor_partition_size;
             data_t* minor_partition=NULL; 
-            data_t* maj_partition=NULL;           
+            data_t* major_partition=NULL;           
 
             if((rank == pivot_rank)){
                 int pivot_pos = partitioning_mpi(*loc_data, 0, *chunk_size, cmp_ge, pivot);
@@ -243,15 +243,15 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
                     for (int i = 0; i < minor_partition_size; i++){
                         minor_partition[i] = (*loc_data)[i];
                     }
-                    maj_partition = (data_t*)malloc((*chunk_size - minor_partition_size)*sizeof(data_t));
-                    //memcpy(maj_partition, &(*loc_data)[pivot_pos+1], (*chunk_size - minor_partition_size)*sizeof(data_t));
+                    major_partition = (data_t*)malloc((*chunk_size - minor_partition_size)*sizeof(data_t));
+                    //memcpy(major_partition, &(*loc_data)[pivot_pos+1], (*chunk_size - minor_partition_size)*sizeof(data_t));
                     for (int i = 0; i < (*chunk_size - minor_partition_size); i++){
-                        maj_partition[i] = (*loc_data)[pivot_pos+1+i];
+                        major_partition[i] = (*loc_data)[pivot_pos+1+i];
                     }
                     free(*loc_data);
-                    *loc_data = maj_partition;
+                    *loc_data = major_partition;
                     *chunk_size -= minor_partition_size;
-                    //free(maj_partition);
+                    //free(major_partition);
                 }
                 else{
                     minor_partition_left = 0;
@@ -262,15 +262,15 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
                     for (int i = 0; i < minor_partition_size; i++){
                         minor_partition[i] = (*loc_data)[pivot_pos+1+i];
                     }
-                    maj_partition = (data_t*)malloc(pivot_pos*sizeof(data_t));
-                    //memcpy(maj_partition, *loc_data, pivot_pos*sizeof(data_t));
+                    major_partition = (data_t*)malloc(pivot_pos*sizeof(data_t));
+                    //memcpy(major_partition, *loc_data, pivot_pos*sizeof(data_t));
                     for (int i = 0; i < pivot_pos; i++){
-                        maj_partition[i] = (*loc_data)[i];
+                        major_partition[i] = (*loc_data)[i];
                     }
                     free(*loc_data);
-                    *loc_data = maj_partition;
+                    *loc_data = major_partition;
                     *chunk_size = pivot_pos;
-                    //free(maj_partition);
+                    //free(major_partition);
                 }
             }
             // Wait for the minor partition to be defined
@@ -349,12 +349,12 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             if (rank == pivot_rank){
                 switch (minor_partition_left){
                     case 1:
-                        mpi_quicksort(&maj_partition, chunk_size, MPI_DATA_T, right_comm,cmp_ge);
-                        *loc_data = maj_partition;
+                        mpi_quicksort(&major_partition, chunk_size, MPI_DATA_T, right_comm,cmp_ge);
+                        *loc_data = major_partition;
                         break;
                     case 0:
-                        mpi_quicksort(&maj_partition, chunk_size, MPI_DATA_T, left_comm,cmp_ge);
-                        *loc_data = maj_partition;
+                        mpi_quicksort(&major_partition, chunk_size, MPI_DATA_T, left_comm,cmp_ge);
+                        *loc_data = major_partition;
                         break;
                 }
             }
