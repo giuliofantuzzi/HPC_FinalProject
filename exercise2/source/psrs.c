@@ -9,11 +9,21 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
     MPI_Comm_size(comm, &num_procs);
 
     // Step 1: Sort the local arrays
-    #pragma omp parallel
-    {
-        #pragma omp single
-        par_quicksort(*data, 0, *chunk_size, cmp_ge);
-    }
+    //#pragma omp parallel
+    //{
+        //#pragma omp single
+        //par_quicksort(*data, 0, *chunk_size, cmp_ge);
+    //}
+    #if defined(_OPENMP)
+                #pragma omp parallel
+                {
+                    #pragma omp single
+                    omp_quicksort_L1(*data, 0, *chunk_size, cmp_ge);
+                    #pragma omp taskwait
+                }
+    #else
+                serial_quicksort(*data, 0, *chunk_size, cmp_ge);
+    #endif
 
     // Step 2: Select the pivots
     //data_t* pivots = (data_t*)malloc(num_procs*sizeof(data_t));
@@ -43,47 +53,56 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
 
     data_t* selected_pivots = (data_t*)malloc((num_procs-1)*sizeof(data_t));
     if (rank == 0){
-        printf("Pivots gathered sorting:\n");
-        show_array(pivots, 0, num_procs*num_procs, 0);
+        //printf("Pivots gathered sorting:\n");
+        //show_array(pivots, 0, num_procs*num_procs, 0);
 
         // Sort the pivots
-        par_quicksort(pivots, 0, num_procs*num_procs, cmp_ge);
+        //par_quicksort(pivots, 0, num_procs*num_procs, cmp_ge);
+	#if defined(_OPENMP)
+		#pragma omp parallel
+            	{
+                    #pragma omp single
+		    omp_quicksort_L1(pivots, 0, num_procs*num_procs, cmp_ge);
+		    #pragma omp taskwait
+		}
+	#else
+		serial_quicksort(pivots, 0, num_procs*num_procs, cmp_ge);
 
-
-        printf("Pivots sorted:\n");
-        show_array(pivots, 0, num_procs*num_procs, 0);
+        #endif
+        //printf("Pivots sorted:\n");
+        //show_array(pivots, 0, num_procs*num_procs, 0);
 
         // Select the pivots
         for (int i = 1; i < num_procs; i++){
             selected_pivots[i - 1] = pivots[i*num_procs];
         }
 
-        printf("Selected pivots:\n");
-        show_array(selected_pivots, 0, num_procs -1, 0);
+        //printf("Selected pivots:\n");
+        //show_array(selected_pivots, 0, num_procs -1, 0);
     }
 
     // Broadcast the selected pivots from rank 0
     MPI_Bcast(selected_pivots, num_procs -1, MPI_DATA_T, 0, comm);
 
-    for (int i = 0; i < num_procs; i++){
-        if(rank == i){
-        printf("Process %d has received\n", rank);
-        show_array(selected_pivots, 0, num_procs -1, 0);
-        }
-        MPI_Barrier(comm);
-    }
+    //for (int i = 0; i < num_procs; i++){
+        //if(rank == i){
+        //printf("Process %d has received\n", rank);
+        //show_array(selected_pivots, 0, num_procs -1, 0);
+        //}
+        //MPI_Barrier(comm);
+    //}
 
     // Step 3: Partition the local arrays
     int* pivot_positions = (int*)malloc(num_procs*sizeof(int));
     for (int i = 0; i < num_procs - 1; i++){
-        pivot_positions[i] = mpi_partition(*data, 0, *chunk_size, cmp_ge, &selected_pivots[i]);
+        pivot_positions[i] = mpi_partitioning(*data, 0, *chunk_size, cmp_ge, &selected_pivots[i]);
     }
 
     for (int i=0; i<num_procs; i++){
         if(rank == i){
-            printf("Process %d has selected the pivot positions\n", rank);
+            //printf("Process %d has selected the pivot positions\n", rank);
             for (int j = 0; j < num_procs - 1; j++){
-                printf("%d ", pivot_positions[j]);
+                //printf("%d ", pivot_positions[j]);
             }
         }
         MPI_Barrier(comm);
@@ -95,22 +114,22 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
     MPI_Allgather(chunk_size, 1, MPI_INT, all_chunk_sizes, 1, MPI_INT, comm);
     MPI_Allgather(pivot_positions, num_procs - 1, MPI_INT, all_pivot_positions, num_procs - 1, MPI_INT, comm);
 
-    printf("Process %d has gathered the chunk sizes and pivot positions\n", rank);
-    for (int i = 0; i < num_procs; i++){
-        if (rank == i){
-            printf("All chunk sizes:\n");
-            for (int j = 0; j < num_procs; j++){
-                printf("%d ", all_chunk_sizes[j]);
-            }
-            printf("\n");
-            printf("All pivot positions:\n");
-            for (int j = 0; j < num_procs * (num_procs - 1); j++){
-                printf("%d ", all_pivot_positions[j]);
-            }
-            printf("\n");
-        }
-        MPI_Barrier(comm);
-    }
+    //printf("Process %d has gathered the chunk sizes and pivot positions\n", rank);
+    //for (int i = 0; i < num_procs; i++){
+        //if (rank == i){
+            //printf("All chunk sizes:\n");
+            //for (int j = 0; j < num_procs; j++){
+                //printf("%d ", all_chunk_sizes[j]);
+            //}
+            //printf("\n");
+            //printf("All pivot positions:\n");
+            //for (int j = 0; j < num_procs * (num_procs - 1); j++){
+                //printf("%d ", all_pivot_positions[j]);
+            //}
+            //printf("\n");
+        //}
+        //MPI_Barrier(comm);
+    //}
 
     // Initialize sendcounts and sdispls
     int* sendcounts = (int*)malloc(num_procs*sizeof(int));
@@ -154,32 +173,32 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
 
     MPI_Barrier(comm);
 
-    printf("Process %d has set the send and receive counts and displacements\n", rank);
-    for (int i = 0; i < num_procs; i++){
-        if (rank == i){
-            printf("Send counts:\n");
-            for (int j = 0; j < num_procs; j++){
-                printf("%d ", sendcounts[j]);
-            }
-            printf("\n");
-            printf("Receive counts:\n");
-            for (int j = 0; j < num_procs; j++){
-                printf("%d ", recvcounts[j]);
-            }
-            printf("\n");
-            printf("Send displacements:\n");
-            for (int j = 0; j < num_procs; j++){
-                printf("%d ", sdispls[j]);
-            }
-            printf("\n");
-            printf("Receive displacements:\n");
-            for (int j = 0; j < num_procs; j++){
-                printf("%d ", rdispls[j]);
-            }
-            printf("\n");
-        }
-        MPI_Barrier(comm);
-    }
+    //printf("Process %d has set the send and receive counts and displacements\n", rank);
+    //for (int i = 0; i < num_procs; i++){
+        //if (rank == i){
+            //printf("Send counts:\n");
+            //for (int j = 0; j < num_procs; j++){
+                //printf("%d ", sendcounts[j]);
+            //}
+            //printf("\n");
+            //printf("Receive counts:\n");
+            //for (int j = 0; j < num_procs; j++){
+                //printf("%d ", recvcounts[j]);
+            //}
+            //printf("\n");
+            //printf("Send displacements:\n");
+            //for (int j = 0; j < num_procs; j++){
+                //printf("%d ", sdispls[j]);
+            //}
+            //printf("\n");
+            //printf("Receive displacements:\n");
+            //for (int j = 0; j < num_procs; j++){
+                //printf("%d ", rdispls[j]);
+            //}
+            //printf("\n");
+        //}
+        //MPI_Barrier(comm);
+    //}
 
     // Initialize the merged array
     int new_chunk_size = 0;
@@ -188,7 +207,7 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
     }
     data_t* merged = (data_t*)malloc(new_chunk_size*sizeof(data_t));
 
-    printf("New array size is %d\n", new_chunk_size);
+    //printf("New array size is %d\n", new_chunk_size);
 
     // Alltoallv
     MPI_Alltoallv(*data, sendcounts, sdispls, MPI_DATA_T, merged, recvcounts, rdispls, MPI_DATA_T, comm);
@@ -201,11 +220,22 @@ void psrs(data_t** data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm
     *chunk_size = new_chunk_size;
 
     // Step 4: Local sort
-    #pragma omp parallel
-    {
-        #pragma omp single
-        par_quicksort(*data, 0, *chunk_size, cmp_ge);
-    }
+    //#pragma omp parallel
+    //{
+    //    #pragma omp single
+    //    omp_quicksort(*data, 0, *chunk_size, cmp_ge);
+    //}
+    #if defined(_OPENMP)
+	#pragma omp parallel
+        {
+            #pragma omp single
+	    omp_quicksort_L1(*data, 0, *chunk_size, cmp_ge);
+	    //omp_quicksort(pivots, 0, num_procs, cmp_ge);
+            #pragma omp taskwait
+	}
+    #else
+        serial_quicksort(*data, 0, *chunk_size, cmp_ge);
+    #endif
 
     // Free the memory
     free(pivots);

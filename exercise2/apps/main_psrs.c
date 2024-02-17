@@ -90,7 +90,20 @@ int main(int argc, char** argv){
     double t_start, t_end;
     MPI_Barrier(MPI_COMM_WORLD);
     t_start= MPI_Wtime();
-    mpi_quicksort(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD,compare_ge);
+    if(n_processes>1){
+        psrs(&data, &chunk_size, MPI_DATA_T, MPI_COMM_WORLD, compare_ge); 
+    }
+    else{
+        #if defined(_OPENMP)
+	#pragma omp parallel
+	{
+		#pragma omp single
+		omp_quicksort(data,0,chunk_size,compare_ge);
+	}
+	#else
+		serial_quicksort(data,0,chunk_size,compare_ge);
+	#endif
+    }
     MPI_Barrier(MPI_COMM_WORLD);
     t_end = MPI_Wtime();
     double time = t_end - t_start;
