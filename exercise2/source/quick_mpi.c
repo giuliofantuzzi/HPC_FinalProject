@@ -37,7 +37,7 @@ int partitioning(data_t* data, int start, int end, compare_t cmp_ge){
 }
 
 
-int show_array(data_t* data, int start, int end, int not_used){
+int show_array(data_t* data, int start, int end){
     for (int i = start; i < end; i++)
         printf("%f ", data[i].data[HOT]);
     printf("\n");
@@ -70,7 +70,7 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
       printf( "partitioning is wrong\n");				\
       printf("%4d, %4d (%4d, %g) -> %4d, %4d  +  %4d, %4d\n",		\
 	     start, end, mid, data[mid].data[HOT],start, mid, mid+1, end); \
-      show_array( data, start, end, 0 ); }}
+      show_array( data, start, end); }}
  #else
  #define CHECK
  #endif
