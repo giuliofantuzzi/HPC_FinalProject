@@ -67,14 +67,13 @@ int main(int argc, char** argv){
         data[i].data[HOT] = drand48();
     }    
     #endif
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
 
     //.................................................................................................
     // (3) SORT THE DATA AND MEASURE TIME
     //.................................................................................................
 
-    // Wait all processes to finish generating the data
     double t_start, t_end;
     MPI_Barrier(MPI_COMM_WORLD);
     t_start= MPI_Wtime();

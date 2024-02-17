@@ -3,12 +3,17 @@
 //  FUNCTIONS DEFINITION
 // ================================================================
 
+//.....................................................................................................................
+// ABOUT: function to swap elements
 #define SWAP(A,B,SIZE) do {int sz = (SIZE); char *a = (A); char *b = (B); \
 do { char _temp = *a;*a++ = *b;*b++ = _temp;} while (--sz);} while (0)
+//.....................................................................................................................
 
+//.....................................................................................................................
+// ABOUT: function to partition the array into 2 parts: < and >= than a pivot
 int partitioning(data_t* data, int start, int end, compare_t cmp_ge){
 
-    // Pick the median of the [0], [mid] and [end] element as pivot
+    // Pivot selection: pick the median of the [0], [mid] and [end] elements
     int mid = (start + end-1) / 2;
     if (cmp_ge((void*)&data[start], (void*)&data[mid]))
         SWAP((void*)&data[start], (void*)&data[mid], sizeof(data_t));
@@ -17,42 +22,37 @@ int partitioning(data_t* data, int start, int end, compare_t cmp_ge){
     if (cmp_ge((void*)&data[mid], (void*)&data[start]))
         SWAP((void*)&data[start], (void*)&data[mid], sizeof(data_t));
 
-    // With the operations above now the pivot is at the beginning
+    // Note: with operations above the pivot is now in the first position
     void* pivot = (void*)&data[start];
+
     // Partition around the pivot
     int pointbreak = start + 1;
     for (int i = start + 1; i < end; ++i){
         if (!cmp_ge((void*)&data[i], pivot)){
             // Move elements less than pivot to the left side
             SWAP((void*)&data[i], (void*)&data[pointbreak], sizeof(data_t));
-
-            ++ pointbreak;
-            
+            // and increment the pointbreak
+            ++ pointbreak;       
         }
     }
     // Put the pivot in the right place
     SWAP((void*)&data[start], (void*)&data[pointbreak - 1], sizeof(data_t));
-    // Return the pivot position
+    // Return the index of the last element < pivot
     return pointbreak - 1;
 }
+//.....................................................................................................................
 
-
+//.....................................................................................................................
+// ABOUT: function to print the array (for debugging)
 int show_array(data_t* data, int start, int end){
     for (int i = start; i < end; i++)
         printf("%f ", data[i].data[HOT]);
     printf("\n");
     return 0;
 }
+//.....................................................................................................................
 
-int compare(const void* a, const void* b){
-    data_t* A = (data_t*)a;
-    data_t* B = (data_t*)b;
-    double diff = A->data[HOT] - B->data[HOT];
-
-    // return 1 if A > B, 0 if A == B, -1 if A < B
-    return ((diff > 0) - (diff < 0));
-}
-
+//.....................................................................................................................
 int compare_ge(const void* a, const void* b){
     data_t* A = (data_t*)a;
     data_t* B = (data_t*)b;
@@ -60,10 +60,11 @@ int compare_ge(const void* a, const void* b){
     // return 1 if A >= B, 0 if A < B
     return (A->data[HOT] >= B->data[HOT]);
 }
+//.....................................................................................................................
 
+//.....................................................................................................................
 void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 {
-
  #if defined(DEBUG)
  #define CHECK {							\
     if ( verify_partitioning( data, start, end, mid ) ) {		\
@@ -91,9 +92,11 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 	SWAP( (void*)&data[start], (void*)&data[end-1], sizeof(data_t) );
     }
 }
+//.....................................................................................................................
 
+
+//.....................................................................................................................
 #ifdef _OPENMP
-
 void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size >  2) {
@@ -151,8 +154,10 @@ void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge) {
     }
 }
 #endif
+//.....................................................................................................................
 
 
+//.....................................................................................................................
 int mpi_partitioning(data_t* data, int start, int end, compare_t cmp_ge, void* pivot){
     // Function that partitions the array into two parts given a pivot
     // and returns the position of the last element of the first part
@@ -435,7 +440,9 @@ int verify_sorting( data_t *data, int start, int end)
         i++;
     return ( i == end );
 }
+//.....................................................................................................................
 
+//.....................................................................................................................
 // Verify sorting between threads
 int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs)
 {
@@ -475,3 +482,4 @@ int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MP
         return 0;
     }
 }
+//.....................................................................................................................

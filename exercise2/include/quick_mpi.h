@@ -52,8 +52,7 @@
 #endif
 #define HOT       0
 
-// let's define the default amount of data
-//
+// Define the default amount of data
 #if (!defined(DEBUG) || defined(_OPENMP))
 #define N_dflt    100000
 #else
@@ -84,8 +83,7 @@ typedef int verify_t(data_t *, int, int);
 // ================================================================
 //  FUNCTIONS DECLARATION
 // ================================================================
-
-compare_t compare;      
+      
 compare_t compare_ge;   
 verify_t verify_partitioning;
 verify_t verify_sorting;
