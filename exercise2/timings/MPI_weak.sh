@@ -5,7 +5,7 @@
 #SBATCH --partition=EPYC
 #SBATCH --nodes=1
 #SBATCH --exclusive
-#SBATCH --time=02:00:00
+#SBATCH --time=00:07:00
 #SBATCH --output=MPI_weak.out
 #--------------------------------------------------------------------------------
 csv="MPI_weak_160M.csv"
@@ -16,23 +16,23 @@ OMP_threads=4
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 #--------------------------------------------------------------------------------
-echo "Processes,Threads,Time" > $csv 
+#echo "Processes,Threads,Time" > $csv 
 
 # Step 1: serial benchmark
-#export OMP_NUM_THREADS=1
-#for iter in {1..5..1}
-#do
-#    $exe $N >> $csv
-#done
+export OMP_NUM_THREADS=1
+for iter in {1..5..1}
+do
+    $exe $W >> $csv
+done
 #--------------------------------------------------------------------------------
 # Step 2: hybrid benchmark
-export OMP_NUM_THREADS=$OMP_threads
-for p in {2..64..1}
-do
-    for iter in {1..5..1}
-    do
-	N=$((W*p))
-        mpirun -np $p --map-by socket $exe $N >> $csv
-    done
-done
+#export OMP_NUM_THREADS=$OMP_threads
+#for p in {2..64..1}
+#do
+#    for iter in {1..5..1}
+#    do
+#	N=$((W*p))
+#        mpirun -np $p --map-by socket $exe $N >> $csv
+#    done
+#done
 #--------------------------------------------------------------------------------
