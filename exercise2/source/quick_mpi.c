@@ -29,7 +29,7 @@ int partitioning(data_t* data, int start, int end, compare_t cmp_ge){
     int pointbreak = start + 1;
     for (int i = start + 1; i < end; ++i){
         if (!cmp_ge((void*)&data[i], pivot)){
-            // Move elements less than pivot to the left side
+            // Move elements < pivot to the left side
             SWAP((void*)&data[i], (void*)&data[pointbreak], sizeof(data_t));
             // and increment the pointbreak
             ++ pointbreak;       
@@ -53,6 +53,7 @@ int show_array(data_t* data, int start, int end){
 //.....................................................................................................................
 
 //.....................................................................................................................
+// ABOUT: functio to make >= comparison (used for partitioning)
 int compare_ge(const void* a, const void* b){
     data_t* A = (data_t*)a;
     data_t* B = (data_t*)b;
@@ -63,6 +64,7 @@ int compare_ge(const void* a, const void* b){
 //.....................................................................................................................
 
 //.....................................................................................................................
+// ABOUT: serial implementation of the Quicksort algorithm
 void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 {
  #if defined(DEBUG)
@@ -96,27 +98,28 @@ void serial_quicksort( data_t *data, int start, int end, compare_t cmp_ge )
 
 
 //.....................................................................................................................
+// ABOUT: openMP implementations of the Quicksort algorithm. 2 versions:
+//        1) "standard" implementation
+//        2) "optimized" implementation that spawns a new task only if the size of the subarray is greater than L1 cache size
+
 #ifdef _OPENMP
 void omp_quicksort(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size >  2) {
         int mid = partitioning(data, start, end, cmp_ge);
         // Use OpenMP to parallelize the recursive calls
-        CHECK; 
-	#pragma omp task
+	    #pragma omp task
         {
+            // Sort the left part
             omp_quicksort(data, start, mid, cmp_ge);
         }
         #pragma omp task
         {
-            // Sort the right half
-            //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
+            // Sort the right part
 	        omp_quicksort(data, mid +  1, end, cmp_ge);
-         }
         }
-    	
+        }
     else {
-        // Handle small subarrays sequentially
         if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
             SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
         }
@@ -127,27 +130,25 @@ void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge) {
     int size = end - start;
     if (size > 2) {
         int mid = partitioning(data, start, end, cmp_ge);
-        // Use OpenMP to parallelize the recursive calls
-        CHECK;
-	if(size>SIZE_L1){
+        // Use OpenMP to parallelize the recursive calls only if size > L1_CACHE size
+	    if(size>SIZE_L1){
             #pragma omp task
             {
+                // Sort the left part
                 omp_quicksort(data, start, mid, cmp_ge);
             }
             #pragma omp task
             {
-                // Sort the right half
-                //printf("RIGHT Recursive call by thread %d\n",omp_get_thread_num());
+                // Sort the right part
                 omp_quicksort(data, mid +  1, end, cmp_ge);
             }
-	}
-	else{
-	    serial_quicksort(data,start,mid,cmp_ge);
-	    serial_quicksort(data,mid+1,end,cmp_ge);
-	}
+        }
+        else{ // Use the serial version
+            serial_quicksort(data,start,mid,cmp_ge);
+            serial_quicksort(data,mid+1,end,cmp_ge);
+        }
     }
     else {
-        // Handle small subarrays sequentially
         if ((size ==  2) && cmp_ge((void *)&data[start], (void *)&data[end -  1])) {
             SWAP((void *)&data[start], (void *)&data[end -  1], sizeof(data_t));
         }
@@ -158,32 +159,26 @@ void omp_quicksort_L1(data_t *data, int start, int end, compare_t cmp_ge) {
 
 
 //.....................................................................................................................
-int mpi_partitioning(data_t* data, int start, int end, compare_t cmp_ge, void* pivot){
-    // Function that partitions the array into two parts given a pivot
-    // and returns the position of the last element of the first part
-
+// ABOUT: Same as partitioning, but here the pivot is given as input (in general it might not belong to data!)
+int partitioning_mpi(data_t* data, int start, int end, compare_t cmp_ge, void* pivot){ 
     // Partition around the pivot
     int pointbreak = start;
-
-    // This can't be done in parallel because of possible data races in the exchanges and pointbreak increment
-    // Could be done with a parallel for loop, synchronized by an atomic increment of pointbreak, but it would be slower
     for (int i = start; i < end; ++i){
         if (!cmp_ge((void*)&data[i], pivot)){
-            
-            // Move elements less than pivot to the left side
+            // Move elements < pivot to the left side
             SWAP((void*)&data[i], (void*)&data[pointbreak], sizeof(data_t));
 
             ++ pointbreak;
             
         }
     }
-    // We don't need to Put the pivot in the right place since the mpi pivot might not contain it!
-    // SWAP((void*)&data[start], (void*)&data[pointbreak - 1], sizeof(data_t));
-    // Return the pivot position
     return pointbreak - 1;
 }
+//.....................................................................................................................
 
 
+//.....................................................................................................................
+// ABOUT: MPI implementation of the Quicksort algorithm [generalized also to the case of an odd number of processes :) ]
 void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm,compare_t cmp_ge){
     int rank, num_procs;
     MPI_Comm_rank(comm, &rank);
@@ -237,7 +232,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             data_t* maj_partition=NULL;           
 
             if((rank == pivot_rank)){
-                int pivot_pos = mpi_partitioning(*loc_data, 0, *chunk_size, cmp_ge, pivot);
+                int pivot_pos = partitioning_mpi(*loc_data, 0, *chunk_size, cmp_ge, pivot);
 
                 if(pivot_pos < (*chunk_size-1) / 2){    
                     minor_partition_left = 1;
@@ -374,7 +369,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
     
         //---------------------------------------------------------------------------------------------------------------------
         // Now partition all the other chunks and complete all the exchanges
-        int pivot_pos = mpi_partitioning(*loc_data, 0, *chunk_size, compare_ge, pivot);
+        int pivot_pos = partitioning_mpi(*loc_data, 0, *chunk_size, compare_ge, pivot);
         free(pivot);
         
         //data_t* merged=NULL;
@@ -443,12 +438,11 @@ int verify_sorting( data_t *data, int start, int end)
 //.....................................................................................................................
 
 //.....................................................................................................................
-// Verify sorting between threads
-int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs)
+// ABOUT: function to check the sorting both within each process, both between processes
+int verify_sorting_global( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs)
 {
     // First check that the local array is sorted
     if(verify_sorting( loc_data, start, end)){
-
         // Then I check that the last element of the local array is less than or equal to the first element of the next process
         if (rank >= 0 && rank < num_procs - 1) {
 	    // Send the last element of loc_data to the next process (rank + 1)
@@ -463,12 +457,10 @@ int verify_global_sorting( data_t *loc_data, int start, int end, MPI_Datatype MP
 	        MPI_Send(&dummy, 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
  	    }
         }
-
         if (rank >0 && rank < num_procs) {
 	    data_t prev_last;
 	    // Receive the last element from the previous process (rank - 1)
 	    MPI_Recv(&prev_last, 1, MPI_DATA_T, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
 	    // Check if the first element of the current process is lower than the last element of the previous process
 	    if (loc_data[0].data[HOT] < prev_last.data[HOT]) {
 	        // If not sorted, return 0

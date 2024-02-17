@@ -86,7 +86,7 @@ int main(int argc, char** argv){
     // (4) VERIFY THE SORTING
     //.................................................................................................
 
-    int chunk_check = verify_global_sorting(data, 0, chunk_size, MPI_DATA_T, rank, n_processes);
+    int chunk_check = verify_sorting_global(data, 0, chunk_size, MPI_DATA_T, rank, n_processes);
     MPI_Barrier(MPI_COMM_WORLD);
     int global_check = 0;
     MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);

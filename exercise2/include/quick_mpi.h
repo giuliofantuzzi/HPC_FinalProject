@@ -85,12 +85,12 @@ typedef int verify_t(data_t *, int, int);
 // ================================================================
       
 compare_t compare_ge;   
+verify_t show_array;
 verify_t verify_partitioning;
 verify_t verify_sorting;
-verify_t show_array;
-int verify_global_sorting(data_t*, int, int, MPI_Datatype, int, int);
+int verify_sorting_global(data_t*, int, int, MPI_Datatype, int, int);
 int partitioning(data_t*, int, int, compare_t);
-int mpi_partitioning(data_t*, int, int, compare_t, void*);
+int partitioning_mpi(data_t*, int, int, compare_t, void*);
 
 // Serial Quicksort
 void serial_quicksort( data_t *, int, int, compare_t ); 
