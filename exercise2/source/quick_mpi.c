@@ -187,7 +187,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
     if (num_procs > 1){
         //---------------------------------------------------------------------------------------------------------------------
         // (1) Divide the data into two parts and declare 2 communicators: left and right
-        int pivot_rank = (num_procs - 1) / 2;
+        int mid_rank = (num_procs - 1) / 2;
         MPI_Comm left_comm, right_comm;
         //---------------------------------------------------------------------------------------------------------------------
         // (2) Select global pivot and broadcast it to all processes
@@ -231,7 +231,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             data_t* minor_partition=NULL; 
             data_t* major_partition=NULL;           
 
-            if((rank == pivot_rank)){
+            if((rank == mid_rank)){
                 int pivot_pos = partitioning_mpi(*loc_data, 0, *chunk_size, cmp_ge, pivot);
 
                 if(pivot_pos < (*chunk_size-1) / 2){    
@@ -276,12 +276,12 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             // Wait for the minor partition to be defined
             //MPI_Barrier(comm); //USELESS
             // Broadcast the minor partition size to all processes
-            MPI_Bcast(&minor_partition_left, 1, MPI_INT, pivot_rank, comm);
-            MPI_Bcast(&minor_partition_size, 1, MPI_INT, pivot_rank, comm);
+            MPI_Bcast(&minor_partition_left, 1, MPI_INT, mid_rank, comm);
+            MPI_Bcast(&minor_partition_size, 1, MPI_INT, mid_rank, comm);
 
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // TO BE DONE
-            // Now pivot_rank has to distribute (with scatterv) the minor partition to all processes and then keep just the major partition as its own loc_data
+            // Now mid_rank has to distribute (with scatterv) the minor partition to all processes and then keep just the major partition as its own loc_data
             // Notice that i want to manage the cases in which minor_partition_size is not divisible by the number of the receiving processes
             // and also the case in which the minor_partition_size is less that the number of processes           
             
@@ -295,7 +295,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             int start = 0;
             // DUBBIO SE SIA DA FARE SOLO IN UN PROCESSO QUESTO!
             for (int i = 0; i < num_procs; i++){
-                if (i == pivot_rank){
+                if (i == mid_rank){
                     sendcounts[i] = 0; // Root process does not receive any data
                 } else {
                     sendcounts[i] = portion_size;
@@ -309,14 +309,14 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             }
             // Now scatterv the minor partition to all processes
             // data_t* local_minor_partition = (data_t*)malloc(sendcounts[rank] * sizeof(data_t));
-            // MPI_Scatterv(&minor_partition[0], sendcounts, displs, MPI_DATA_T, &local_minor_partition[0], sendcounts[rank], MPI_DATA_T, pivot_rank, comm);
+            // MPI_Scatterv(&minor_partition[0], sendcounts, displs, MPI_DATA_T, &local_minor_partition[0], sendcounts[rank], MPI_DATA_T, mid_rank, comm);
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // print if scatterv for successfull for rank
             //printf("rank %d has received from scatterv\n",rank);
             
             // Merge the local_minor_partition with the loc_data
             *loc_data = (data_t*)realloc(*loc_data, (*chunk_size + sendcounts[rank]) * sizeof(data_t));
-            MPI_Scatterv(&minor_partition[0], sendcounts, displs, MPI_DATA_T, &(*loc_data)[*chunk_size], sendcounts[rank], MPI_DATA_T, pivot_rank, comm);
+            MPI_Scatterv(&minor_partition[0], sendcounts, displs, MPI_DATA_T, &(*loc_data)[*chunk_size], sendcounts[rank], MPI_DATA_T, mid_rank, comm);
             *chunk_size += sendcounts[rank];
 
             // Append the local_minor_partition to loc_data (QUI INIZIANO I DUBBI)
@@ -336,17 +336,17 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // Finally we can define 
             if(minor_partition_left){
-                MPI_Comm_split(comm, rank < pivot_rank, rank, &left_comm);
-                MPI_Comm_split(comm, rank >= pivot_rank, rank, &right_comm);
+                MPI_Comm_split(comm, rank < mid_rank, rank, &left_comm);
+                MPI_Comm_split(comm, rank >= mid_rank, rank, &right_comm);
 
             }
             else{
-                MPI_Comm_split(comm, rank <= pivot_rank, rank, &left_comm);
-                MPI_Comm_split(comm, rank > pivot_rank, rank, &right_comm);
+                MPI_Comm_split(comm, rank <= mid_rank, rank, &left_comm);
+                MPI_Comm_split(comm, rank > mid_rank, rank, &right_comm);
             }
             // // Define the communicators for the recursive
             // Chiamare ricorsione per il pivot rank    
-            if (rank == pivot_rank){
+            if (rank == mid_rank){
                 switch (minor_partition_left){
                     case 1:
                         mpi_quicksort(&major_partition, chunk_size, MPI_DATA_T, right_comm,cmp_ge);
@@ -363,8 +363,8 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         }
         else{ // If number of processes is even
             // Define the communicators for the recursive calls
-            MPI_Comm_split(comm, rank <= pivot_rank, rank, &left_comm);
-            MPI_Comm_split(comm, rank > pivot_rank, rank, &right_comm);
+            MPI_Comm_split(comm, rank <= mid_rank, rank, &left_comm);
+            MPI_Comm_split(comm, rank > mid_rank, rank, &right_comm);
         }
     
         //---------------------------------------------------------------------------------------------------------------------
@@ -373,37 +373,37 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         free(pivot);
         
         //data_t* merged=NULL;
-        if (rank < pivot_rank || (num_procs % 2 == 0 && rank == pivot_rank)){ //
+        if (rank < mid_rank || (num_procs % 2 == 0 && rank == mid_rank)){ //
             int elements_to_send = *chunk_size - (pivot_pos + 1);
-            MPI_Send(&elements_to_send, 1, MPI_INT, rank + pivot_rank + 1, 0, comm);
+            MPI_Send(&elements_to_send, 1, MPI_INT, rank + mid_rank + 1, 0, comm);
             int recv_elements;
-            MPI_Recv(&recv_elements, 1, MPI_INT, rank + pivot_rank + 1, 0, comm, MPI_STATUS_IGNORE);
+            MPI_Recv(&recv_elements, 1, MPI_INT, rank + mid_rank + 1, 0, comm, MPI_STATUS_IGNORE);
             recv_elements = (recv_elements > 0) ? recv_elements : 0;
             int new_chunk_size = *chunk_size - elements_to_send + recv_elements;
             data_t* merged = (data_t*)malloc((new_chunk_size)*sizeof(data_t));
             for (int i = 0; i <= pivot_pos; i++){
                 merged[i] = (*loc_data)[i];
             }
-            MPI_Send(&(*loc_data)[pivot_pos + 1], elements_to_send, MPI_DATA_T, rank + pivot_rank + 1, 0, comm);
+            MPI_Send(&(*loc_data)[pivot_pos + 1], elements_to_send, MPI_DATA_T, rank + mid_rank + 1, 0, comm);
             free(*loc_data);
-            MPI_Recv(&merged[pivot_pos + 1], recv_elements, MPI_DATA_T, rank + pivot_rank + 1, 0, comm, MPI_STATUS_IGNORE);
+            MPI_Recv(&merged[pivot_pos + 1], recv_elements, MPI_DATA_T, rank + mid_rank + 1, 0, comm, MPI_STATUS_IGNORE);
             *chunk_size = new_chunk_size;
             mpi_quicksort(&merged, chunk_size, MPI_DATA_T, left_comm,cmp_ge);
             *loc_data = merged;
         }
-        if (rank > pivot_rank){
+        if (rank > mid_rank){
             int recv_elements;
-            MPI_Recv(&recv_elements, 1, MPI_INT, rank - (pivot_rank + 1), 0, comm, MPI_STATUS_IGNORE);
+            MPI_Recv(&recv_elements, 1, MPI_INT, rank - (mid_rank + 1), 0, comm, MPI_STATUS_IGNORE);
             int elements_to_send = pivot_pos +1;
-            MPI_Send(&elements_to_send, 1, MPI_INT, rank - (pivot_rank +1), 0, comm);
+            MPI_Send(&elements_to_send, 1, MPI_INT, rank - (mid_rank +1), 0, comm);
             recv_elements = (recv_elements > 0) ? recv_elements : 0;
             int new_chunk_size = *chunk_size - elements_to_send + recv_elements;
             data_t* merged = (data_t*)malloc((new_chunk_size)*sizeof(data_t));
             for (int i = pivot_pos + 1; i < *chunk_size; i++){
                 merged[i - (pivot_pos + 1) + recv_elements] = (*loc_data)[i];
             }
-            MPI_Recv(&merged[0], recv_elements, MPI_DATA_T, rank - (pivot_rank +1), 0, comm, MPI_STATUS_IGNORE);
-            MPI_Send(&(*loc_data)[0], pivot_pos +1, MPI_DATA_T, rank - (pivot_rank +1), 0, comm);
+            MPI_Recv(&merged[0], recv_elements, MPI_DATA_T, rank - (mid_rank +1), 0, comm, MPI_STATUS_IGNORE);
+            MPI_Send(&(*loc_data)[0], pivot_pos +1, MPI_DATA_T, rank - (mid_rank +1), 0, comm);
             free(*loc_data);
             *chunk_size = new_chunk_size;
             mpi_quicksort(&merged, chunk_size, MPI_DATA_T, right_comm,cmp_ge);
