@@ -18,22 +18,22 @@ library(ggplot2)
 
 # Comparison between classical and L1 version
 
-These data are referred to a total size of $N=64.000.000$
+These data are referred to a total size of $N=640.000.000$
 
 Data without L1 improvement:
 
 ```{r}
-omp_timings<- read.csv("../timings/omp_scaling.csv")
+omp_timings<- read.csv("../timings/omp_scaling_640M.csv")
 omp_timings<- omp_timings%>%
   group_by(Threads) %>%
-  summarise(Time = min(Time, na.rm = TRUE))
+  summarise(Time = mean(Time, na.rm = TRUE))
 omp_timings$SpeedUp<- omp_timings$Time[1] / omp_timings$Time
 omp_timings$Type= "Standard"
 ```
 
 With L1 improvement:
 ```{r}
-omp_timings_L1<- read.csv("../timings/omp_scaling_L1.csv")
+omp_timings_L1<- read.csv("../timings/omp_scaling_L1_640M.csv")
 omp_timings_L1<- omp_timings_L1%>%
   group_by(Threads) %>%
   summarise(Time = min(Time, na.rm = TRUE))
@@ -55,14 +55,15 @@ df$Type=as.factor(df$Type)
 ```{r,echo=FALSE}
 df %>%
   ggplot(aes(x = Threads, y = Time, color = Type)) +
-  geom_point(size=2)+
-  geom_line() +
   geom_vline(xintercept = c(2,4,8,16,32,64), linetype = "dashed", color = "grey")+
   annotate("text", x = c(2,4,8,16,32,64), y = rep(0,6), label = c(2,4,8,16,32,64), 
            vjust = 0, hjust = -0.1,color="grey50")+
-    labs(title = "Time vs Threads",
+  geom_line() +
+  geom_point(size=2.3,col="black")+
+  geom_point(size=1.5)+
+  labs(title = "Time vs Threads (SIZE=640M data_t)",
          x = "Threads",
-         y = "Time") +
+         y = "Time (s)") +
     theme_minimal()
 ```
 
@@ -115,7 +116,7 @@ df %>%
            vjust = 0, hjust = -0.1,color="grey")+
   #geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
   labs(title = "OMP SpeedUp",
-       x = "Threads",
-       y = "SpeedUp") +
+       x = "log2(Threads)",
+       y = "log2(SpeedUp)") +
   theme_minimal()
 ```

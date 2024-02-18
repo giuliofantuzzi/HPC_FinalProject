@@ -15,7 +15,7 @@ module load openMPI/4.1.5/gnu/12.2.1
 #--------------------------------------------------------------------------------
 echo "Processes,Threads,Time" > $csv 
 
-for t in 2 4 8 16 32 64 
+for t in 1 2 4 8 16 32 64 
 do
     export OMP_NUM_THREADS=$t
     for iter in {1..5..1}
