@@ -71,8 +71,15 @@ First of all, let's install the zipped file with the *wget* command:
 wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
 ```
 
-For the automatic compilation [click here](#automatized-compilation) \
-For the manual compilation [skip here](#manual-compilation)
+Unzip the downloaded folder:
+
+```bash
+tar -xzvf osu-micro-benchmarks-7.3.tar.gz
+```
+The next step is to compile the library:
+
+- For the automatic compilation [click here](#automatic-compilation) 
+- For the manual compilation [skip here](#manual-compilation)
 
 ## Automatic Compilation
 

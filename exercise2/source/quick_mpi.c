@@ -202,18 +202,18 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         // Gather the randomly selected elements from all processes
         MPI_Gather(&local_pivot, 1, MPI_DATA_T, pivots, 1, MPI_DATA_T, 0, comm);
         if (rank == 0){
-	    #if defined(_OPENMP)
-		#pragma omp parallel
-            	{
+            #if defined(_OPENMP)
+                #pragma omp parallel
+                {
                     #pragma omp single
-		    omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
-		    //omp_quicksort(pivots, 0, num_procs, cmp_ge);
-		    #pragma omp taskwait
-		}
-	    #else
-		serial_quicksort(pivots, 0, num_procs, cmp_ge);
-	    #endif
-	    memcpy(pivot, &pivots[(num_procs / 2)], sizeof(data_t));
+                    omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
+                    //omp_quicksort(pivots, 0, num_procs, cmp_ge);
+                    #pragma omp taskwait
+                }
+            #else
+                serial_quicksort(pivots, 0, num_procs, cmp_ge);
+            #endif
+            memcpy(pivot, &pivots[(num_procs / 2)], sizeof(data_t));
         }
         // Send the pivot to all processes
         MPI_Bcast(pivot, 1, MPI_DATA_T, 0, comm);
