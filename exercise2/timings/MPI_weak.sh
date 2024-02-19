@@ -8,11 +8,11 @@
 #SBATCH --time=00:07:00
 #SBATCH --output=MPI_weak.out
 #--------------------------------------------------------------------------------
-csv="MPI_weak_160M.csv"
+csv="MPI_weak_160M_8threads.csv"
 exe="/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/apps/main.x"
 # Define the Workload per process
 W=2500000
-OMP_threads=4
+OMP_threads=8
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 #--------------------------------------------------------------------------------
@@ -26,13 +26,13 @@ do
 done
 #--------------------------------------------------------------------------------
 # Step 2: hybrid benchmark
-#export OMP_NUM_THREADS=$OMP_threads
-#for p in {2..64..1}
-#do
-#    for iter in {1..5..1}
-#    do
-#	N=$((W*p))
-#        mpirun -np $p --map-by socket $exe $N >> $csv
-#    done
-#done
+export OMP_NUM_THREADS=$OMP_threads
+for p in {2..64..1}
+do
+    for iter in {1..5..1}
+    do
+	N=$((W*p))
+        mpirun -np $p --map-by socket $exe $N >> $csv
+    done
+done
 #--------------------------------------------------------------------------------

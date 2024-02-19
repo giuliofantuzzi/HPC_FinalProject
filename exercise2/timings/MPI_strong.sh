@@ -8,21 +8,21 @@
 #SBATCH --time=02:00:00
 #SBATCH --output=MPI_strong.out
 #--------------------------------------------------------------------------------
-csv="MPI_strong_160M.csv"
+csv="MPI_strong_160M_8threads.csv"
 exe="/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/apps/main.x"
 N=160000000
-OMP_threads=4
+OMP_threads=8
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 #--------------------------------------------------------------------------------
 echo "Processes,Threads,Time" > $csv 
 
 # Step 1: serial benchmark
-#export OMP_NUM_THREADS=1
-#for iter in {1..5..1}
-#do
-#    $exe $N >> $csv
-#done
+export OMP_NUM_THREADS=1
+for iter in {1..5..1}
+do
+    $exe $N >> $csv
+done
 #--------------------------------------------------------------------------------
 # Step 2: hybrid benchmark
 export OMP_NUM_THREADS=$OMP_threads
