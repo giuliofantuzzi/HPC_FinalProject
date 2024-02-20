@@ -222,7 +222,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             int minor_partition_left; // Flag variable: 1 if the minor partition is the left one; 0 otherwise
             int minor_partition_size;
             data_t* minor_partition=NULL; 
-            data_t* major_partition=NULL;           
+            //data_t* major_partition=NULL;           
 
             // Concentrate first on the central process
             if((rank == mid_rank)){
@@ -235,7 +235,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
                     for (int i = 0; i < minor_partition_size; i++){
                         minor_partition[i] = (*loc_data)[i];
                     }
-                    major_partition = (data_t*)malloc((*chunk_size - minor_partition_size)*sizeof(data_t));
+                    data_t* major_partition = (data_t*)malloc((*chunk_size - minor_partition_size)*sizeof(data_t));
                     for (int i = 0; i < (*chunk_size - minor_partition_size); i++){
                         major_partition[i] = (*loc_data)[pivot_pos+1+i];
                     }
@@ -251,7 +251,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
                     for (int i = 0; i < minor_partition_size; i++){
                         minor_partition[i] = (*loc_data)[pivot_pos+1+i];
                     }
-                    major_partition = (data_t*)malloc(pivot_pos*sizeof(data_t));
+                    data_t* major_partition = (data_t*)malloc(pivot_pos*sizeof(data_t));
                     for (int i = 0; i < pivot_pos; i++){
                         major_partition[i] = (*loc_data)[i];
                     }
@@ -294,6 +294,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             MPI_Barrier(comm);
             free(displs);
             free(sendcounts);
+            free(minor_partition);
             
             // Now we can assign the central process to the correct communicator for the recursive call
             // Case 1: major (minor) partition was the right (left)--> include central process in the right comm
