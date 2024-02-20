@@ -6,15 +6,14 @@
 #SBATCH --exclusive
 #SBATCH --time=00:15:00
 #SBATCH --output=omp_scaling.out
-
-csv="omp_scaling_L1_640M.csv"
-exe="/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/apps/main.x"
+#--------------------------------------------------------------------------------
+csv="omp_scaling_640M.csv"
+exe="../apps/main.x"
 N=640000000
 module load architecture/AMD
 module load openMPI/4.1.5/gnu/12.2.1
 #--------------------------------------------------------------------------------
-#echo "Processes,Threads,Time" > $csv 
-
+echo "Processes,Threads,Time" > $csv 
 
 for t in 1 2 4 8 16 32 64 
 do

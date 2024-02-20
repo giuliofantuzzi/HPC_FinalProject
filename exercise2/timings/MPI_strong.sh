@@ -9,7 +9,7 @@
 #SBATCH --output=MPI_strong.out
 #--------------------------------------------------------------------------------
 csv="MPI_strong_160M_128processes.csv"
-exe="/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/apps/main.x"
+exe="../apps/main.x"
 N=160000000
 OMP_threads=4
 module load architecture/AMD

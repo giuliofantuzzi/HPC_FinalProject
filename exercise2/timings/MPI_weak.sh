@@ -9,7 +9,7 @@
 #SBATCH --output=MPI_weak.out
 #--------------------------------------------------------------------------------
 csv="MPI_weak_160M_128processes.csv"
-exe="/u/dssc/gfantuzzi/HPC_FinalProject/exercise2/apps/main.x"
+exe="../apps/main.x"
 # Define the Workload per process
 W=2500000
 OMP_threads=4
