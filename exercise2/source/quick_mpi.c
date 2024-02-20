@@ -180,21 +180,21 @@ int partitioning_mpi(data_t* data, int start, int end, compare_t cmp_ge, void* p
 //.....................................................................................................................
 // ABOUT: MPI implementation of the Quicksort algorithm [generalized also to the case of an odd number of processes :) ]
 void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T, MPI_Comm comm,compare_t cmp_ge){
-    int rank, num_procs;
+    int rank, P;
     MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &num_procs);
-    
-    if (num_procs > 1){
+    MPI_Comm_size(comm, &P);
+    if (P > 1){
         //---------------------------------------------------------------------------------------------------------------------
         // (1) Divide the data into two parts and declare 2 communicators: left and right
-        int mid_rank = (num_procs - 1) / 2;
+        int mid_rank = (P - 1) / 2;
         MPI_Comm left_comm, right_comm;
         //---------------------------------------------------------------------------------------------------------------------
         // (2) Select global pivot and broadcast it to all processes
         data_t* pivot = (data_t*)malloc(sizeof(data_t));
-        data_t* pivots = (data_t*)malloc((num_procs+1)*sizeof(data_t));
+        data_t* pivots = (data_t*)malloc((P+1)*sizeof(data_t));
         // Generate a random index within each chunk
-        srand(time(NULL));
+        //srand(time(NULL));
+        srand(rank);
         int random_index = rand() % *chunk_size;
         // Select the random element from the local data
         data_t local_pivot;
@@ -206,14 +206,14 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
                 #pragma omp parallel
                 {
                     #pragma omp single
-                    omp_quicksort_L1(pivots, 0, num_procs, cmp_ge);
-                    //omp_quicksort(pivots, 0, num_procs, cmp_ge);
+                    omp_quicksort_L1(pivots, 0, P, cmp_ge);
+                    //omp_quicksort(pivots, 0, P, cmp_ge);
                     #pragma omp taskwait
                 }
             #else
-                serial_quicksort(pivots, 0, num_procs, cmp_ge);
+                serial_quicksort(pivots, 0, P, cmp_ge);
             #endif
-            memcpy(pivot, &pivots[(num_procs / 2)], sizeof(data_t));
+            memcpy(pivot, &pivots[(P / 2)], sizeof(data_t));
         }
         // Send the pivot to all processes
         MPI_Bcast(pivot, 1, MPI_DATA_T, 0, comm);
@@ -224,7 +224,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         // Idea: ancora prima di ordinare tutte le partizioni io posso partizionare il pivot rank e capire quale partizione ha maggiore
         // Sulla base di ciò setto la variabile flag per capire come dividere destra e sinistra
         // Ma posso anche fare distribuire la partizione più piccola tra tutti gli altri processi
-        if((num_procs % 2 != 0)){
+        if((P % 2 != 0)){
 
             int minor_partition_left; // 1 if the minor partition of the chunk is the left one, 0 if it is the right one
             int minor_partition_size;
@@ -286,15 +286,15 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
             // and also the case in which the minor_partition_size is less that the number of processes           
             
             // Divide the minor partition into smaller pieces
-            int* sendcounts = (int*)malloc(num_procs*sizeof(int));
-            int* displs = (int*)malloc(num_procs*sizeof(int));
+            int* sendcounts = (int*)malloc(P*sizeof(int));
+            int* displs = (int*)malloc(P*sizeof(int));
 
-            int portion_size = minor_partition_size/ (num_procs - 1); // Exclude pivot rank process
-            int remainder = minor_partition_size % (num_procs - 1); // Exclude pivot rank process
+            int portion_size = minor_partition_size/ (P - 1); // Exclude pivot rank process
+            int remainder = minor_partition_size % (P - 1); // Exclude pivot rank process
 
             int start = 0;
             // DUBBIO SE SIA DA FARE SOLO IN UN PROCESSO QUESTO!
-            for (int i = 0; i < num_procs; i++){
+            for (int i = 0; i < P; i++){
                 if (i == mid_rank){
                     sendcounts[i] = 0; // Root process does not receive any data
                 } else {
@@ -373,7 +373,7 @@ void mpi_quicksort (data_t** loc_data, int* chunk_size, MPI_Datatype MPI_DATA_T,
         free(pivot);
         
         //data_t* merged=NULL;
-        if (rank < mid_rank || (num_procs % 2 == 0 && rank == mid_rank)){ //
+        if (rank < mid_rank || (P % 2 == 0 && rank == mid_rank)){ //
             int elements_to_send = *chunk_size - (pivot_pos + 1);
             MPI_Send(&elements_to_send, 1, MPI_INT, rank + mid_rank + 1, 0, comm);
             int recv_elements;
@@ -439,12 +439,12 @@ int verify_sorting( data_t *data, int start, int end)
 
 //.....................................................................................................................
 // ABOUT: function to check the sorting both within each process, both between processes
-int verify_sorting_global( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int num_procs)
+int verify_sorting_global( data_t *loc_data, int start, int end, MPI_Datatype MPI_DATA_T, int rank, int P)
 {
     // First check that the local array is sorted
     if(verify_sorting( loc_data, start, end)){
         // Then I check that the last element of the local array is less than or equal to the first element of the next process
-        if (rank >= 0 && rank < num_procs - 1) {
+        if (rank >= 0 && rank < P - 1) {
 	    // Send the last element of loc_data to the next process (rank + 1)
 	    if (end - start > 0)
 	        MPI_Send(&loc_data[end - 1], 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
@@ -457,7 +457,7 @@ int verify_sorting_global( data_t *loc_data, int start, int end, MPI_Datatype MP
 	        MPI_Send(&dummy, 1, MPI_DATA_T, rank + 1, 0, MPI_COMM_WORLD);
  	    }
         }
-        if (rank >0 && rank < num_procs) {
+        if (rank >0 && rank < P) {
 	    data_t prev_last;
 	    // Receive the last element from the previous process (rank - 1)
 	    MPI_Recv(&prev_last, 1, MPI_DATA_T, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

@@ -3,7 +3,6 @@
 // ================================================================
 #include <stdio.h>
 #include <stdlib.h>
-//#include <pthread.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
@@ -16,22 +15,22 @@
 // ================================================================
 
 
-// #if defined(_OPENMP)
+#if defined(_OPENMP)
 
-// // measure the wall-clock time
-// #define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
-//                   (double)ts.tv_nsec * 1e-9)
+// measure the wall-clock time
+#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
+                  (double)ts.tv_nsec * 1e-9)
 
-// // measure the cpu thread time
-// #define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +     \
-//                      (double)myts.tv_nsec * 1e-9)
+// measure the cpu thread time
+#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +     \
+                     (double)myts.tv_nsec * 1e-9)
 
-// #else
+#else
 
-// // measure ther cpu process time
-// #define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
-//                   (double)ts.tv_nsec * 1e-9)
-// #endif
+// measure ther cpu process time
+#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
+                  (double)ts.tv_nsec * 1e-9)
+#endif
 
 #if !defined(SIZE_L1)
 #define SIZE_L1 65536
