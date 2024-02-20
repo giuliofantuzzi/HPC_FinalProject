@@ -14,8 +14,8 @@ set(SRC_DIR "source/")
 set(MAIN_DIR "apps/")
 set(EXE_DIR "apps/")
 # Scripts
-set(INCLUDE_FILE "quick_mpi.h")
-set(SRC_FILE "quick_mpi.c")
+set(INCLUDE_FILE "quicksort.h")
+set(SRC_FILE "quicksort.c")
 set(MAIN_FILE "main.c")
 set(EXE_FILE "main.x")
 #----------------------------------------------------------------------------------------------------------
