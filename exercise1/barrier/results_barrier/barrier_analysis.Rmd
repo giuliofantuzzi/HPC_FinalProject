@@ -1,0 +1,296 @@
+---
+title: "Latency analysis for Barrier"
+author: "Giulio Fantuzzi"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+```
+
+
+# Barrier analysis
+
+First of all, import the datasets i obtained from *ORFEO*
+```{r}
+barrier_default.df<- read.csv(file = "barrier_default.csv")
+barrier_linear.df<- read.csv(file = "barrier_linear.csv")
+barrier_doublering.df<- read.csv(file = "barrier_doublering.csv")
+barrier_recursivedoubling.df<- read.csv(file = "barrier_recursivedoubling.csv")
+barrier_bruck.df<- read.csv(file = "barrier_bruck.csv")
+barrier_tree.df<- read.csv(file = "barrier_tree.csv")
+```
+
+Now we can merge them into a single df:
+```{r}
+barrier.df<- rbind(barrier_default.df,barrier_linear.df,barrier_doublering.df,barrier_recursivedoubling.df,barrier_bruck.df,barrier_tree.df)
+```
+
+
+# Fix algorithm and see allocation effect
+
+### Linear Barrier
+
+```{r,fig.width=8, fig.height=5,echo=F}
+barrier.df %>% filter(Algorithm =="Linear")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency(μs)',
+         title = 'Linear Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+```
+
+### Tree Barrier
+
+```{r,fig.width=8, fig.height=5,echo=F}
+barrier.df %>% filter(Algorithm =="Tree")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency(μs)',
+         title = 'Tree Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+```
+
+### Bruck Barrier
+
+```{r,fig.width=8, fig.height=5,echo=F}
+barrier.df %>% filter(Algorithm =="Bruck")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency(μs)',
+         title = 'Bruck Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+```
+
+### Default Barrier
+
+```{r,fig.width=8, fig.height=5,echo=F}
+barrier.df %>% filter(Algorithm =="Default")%>% 
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    #geom_abline(slope = 0.19, intercept = -0.19, color = "red")+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#3498DB")) +
+    xlim(2, 48) +
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency(μs)',
+         title = 'Default Barrier Latency vs #cores (by Allocation)',
+         color = 'Allocation')+
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+```
+
+
+# Fixing allocation and comparing algorithms
+
+```{r,fig.width=15,echo=F}
+Plots=list()
+maps= c("core","socket","node")
+for (i in 1:length(maps)){
+  Plots[[i]]<- barrier.df %>% filter(Allocation == maps[i]) %>% filter(Algorithm %in% c("Default","Tree","Linear","Bruck")) %>%
+    ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+      geom_line(linetype = 1) +
+      geom_point(size=1)+
+      geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+      annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+      scale_color_manual(values = c("#E67E22","#8E44AD","#27AE60","#3498DB")) +
+      xlim(2, 48) +  # Adjust the x-axis limits as needed
+      labs(x = 'N. of processes (#cores)',
+           y = 'Latency(μs)',
+           title = paste0('Barrier Latency vs #cores'),
+           color = 'Algorithm')+
+      theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+}
+Plots[[1]] | Plots[[2]] | Plots[[3]]
+```
+
+
+# Latency models
+
+## Hockney model for linear barrier
+
+```{r}
+#Point to point latency (alpha parameter in Hockney model for linear barrier)
+alpha<- 0.19
+# Model will be Latency= alpha*(P-1) = alpha*P - alpha, with P: number of processes
+barrier_linear.df$HockneyLatency <- alpha* barrier_linear.df$Processes - alpha
+barrier_linear.df$ObservedLatency <-barrier_linear.df$Latency
+# Now make the plot
+Hockney.df <- tidyr::gather(barrier_linear.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(Hockney.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(Hockney.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(Hockney.df, Legend == "HockneyLatency"), linetype = 1) +
+  labs(title = expression(paste("Linear Barrier: Hockney model fit (with ",hat(alpha),"= 0.19 μs)")),
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey19", "HockneyLatency" = "#00BFC1")) +
+  theme_minimal()
+```
+
+
+NB: here we don't need to log2() the latency...the skewness of the variable was given by the effect of different message sizes, but here we don't consider the size anymore!!!
+
+## Linear models for all the algorithms
+
+### Linear Barrier Model
+```{r}
+linear_fit<- lm(formula= Latency ~ -1+Processes,
+                data=barrier_linear.df %>% filter(Allocation == "core")
+                )
+summary(linear_fit)
+```
+
+```{r,echo=F}
+barrier_linear.df$PredictedLatency <- predict(linear_fit)
+barrier_linear.df$ObservedLatency <-barrier_linear.df$Latency
+# Now make the plot
+LinearPlot.df <- tidyr::gather(barrier_linear.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(LinearPlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(LinearPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(LinearPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Linear barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#27AE60")) +
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
+```
+
+For the non linear algorithms I noticed that introducing a quadratic term increase the fit:
+
+```{r}
+tree_fit<- lm(formula=Latency ~ -1+Processes+I(Processes^2),
+                data=barrier_tree.df %>% filter(Allocation == "core")
+                )
+summary(tree_fit)
+```
+
+
+```{r,echo=F}
+barrier_tree.df$PredictedLatency <- predict(tree_fit)
+barrier_tree.df$ObservedLatency <-barrier_tree.df$Latency
+# Now make the plot
+TreePlot.df <- tidyr::gather(barrier_tree.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(TreePlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(TreePlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(TreePlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Tree barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#3498DB"),) +
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
+```
+
+### Bruck Barrier Model
+```{r}
+bruck_fit<- lm(formula= Latency ~ -1+Processes+I(Processes^2),
+                data=barrier_bruck.df %>% filter(Allocation == "core")
+                )
+summary(bruck_fit)
+```
+
+
+```{r,echo=F}
+barrier_bruck.df$PredictedLatency <- predict(bruck_fit)
+barrier_bruck.df$ObservedLatency <-barrier_bruck.df$Latency
+# Now make the plot
+BruckPlot.df <- tidyr::gather(barrier_bruck.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(BruckPlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(BruckPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(BruckPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title = "Bruck barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#E67E22")) +
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
+```
+
+### Default Barrier Model
+
+```{r}
+default_fit<- lm(formula= Latency ~ -1+Processes+I(Processes^2),
+                data=barrier_default.df %>% filter(Allocation == "core")
+                )
+summary(default_fit)
+```
+
+
+```{r,echo=F}
+barrier_default.df$PredictedLatency <- predict(default_fit)
+barrier_default.df$ObservedLatency <-barrier_default.df$Latency
+# Now make the plot
+DefaultPlot.df <- tidyr::gather(barrier_default.df %>% filter(Allocation=="core"), key = "Legend", value = "Value", -Processes, -Allocation, -Algorithm,-Latency)
+# Plot using ggplot
+ggplot(DefaultPlot.df, aes(x = Processes, y = Value, color = Legend)) +
+  geom_point(data = subset(DefaultPlot.df, Legend == "ObservedLatency"), size = 1) +
+  geom_line(data = subset(DefaultPlot.df, Legend == "PredictedLatency"), linetype = 1) +
+  labs(title ="Default barrier: estimated model fit",
+       x = "N. of Processes",
+       y = "Lacency(μs)") +
+  scale_color_manual(values = c("ObservedLatency" = "grey30", "PredictedLatency" = "#8E44AD")) +
+  theme_minimal()+
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 11) )
+```

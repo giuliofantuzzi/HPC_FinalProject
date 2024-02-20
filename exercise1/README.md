@@ -32,7 +32,8 @@
 │   │    └── ⏳ barrier_tree_getdata.sh
 │   │
 │   └──  📂 results_barrier/
-│        ├──🔎 analysis.Rmd
+│        ├── 🌐 barrier_analysis.html
+│        ├── 🔎 barrier_analysis.Rmd
 │        ├── 📊 barrier_bruck.csv
 │        ├── 📊 barrier_default.csv
 │        ├── 📊 barrier_doublering.csv
@@ -51,7 +52,8 @@
 │   │    └── ⏳ bcast_linear_getdata.sh
 │   │
 │   └──  📂 results_bcast/
-│        ├──🔎 analysis.Rmd
+│        ├── 🌐 bcast_analysis.html
+│        ├── 🔎 bcast_analysis.Rmd
 │        ├── 📊 bcast_binarytree.csv
 │        ├── 📊 bcast_chain.csv
 │        ├── 📊 bcast_default.csv

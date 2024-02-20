@@ -1,0 +1,507 @@
+---
+title: "Latency analysis for Broadcast"
+author: "Giulio Fantuzzi"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(plotly)
+```
+
+# Broadcast analysis
+
+First of all, import the datasets i obtained from *ORFEO*
+```{r}
+bcast_default.df<- read.csv(file = "bcast_default.csv")
+bcast_linear.df<- read.csv(file = "bcast_linear.csv")
+bcast_chain.df<- read.csv(file = "bcast_chain.csv")
+bcast_binarytree.df<- read.csv(file = "bcast_binarytree.csv")
+```
+
+Now let's bind them into a single df:
+```{r}
+bcast.df<- rbind(bcast_default.df,bcast_linear.df,bcast_chain.df,bcast_binarytree.df)
+```
+
+
+## Fix algorithm and see how latency changes when allocation varies
+
+### Bcast linear
+At the moment let's fix the size of the message to 1 `MPI_CHAR`
+
+```{r,echo=F}
+bcast_linear.df %>% filter(MessageSize == 1) %>%
+  ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency (μs)',
+         title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
+         color = 'Allocation')+
+    theme_light()+
+    theme(
+      legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+    )
+```
+
+### Bcast chain
+
+As we did above for linear broadcast, we fix the size of the message to 2 `MPI_CHAR`:
+
+```{r,echo=F}
+bcast_chain.df %>% filter(MessageSize == 1) %>%
+ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency (μs)',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
+       color = 'Allocation')+
+  theme_light()+
+  theme(
+    legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+  )
+```
+
+### Bcast BinaryTree
+
+```{r,echo=F}
+bcast_binarytree.df %>% filter(MessageSize == 1) %>%
+ ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency (μs)',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
+       color = 'Allocation')+
+  theme_light()+
+  theme(
+    legend.position = "bottom",
+      legend.text = element_text(size = 12) 
+  )
+```
+
+
+### Bcast Default
+
+```{r,echo=F}
+bcast_default.df %>% filter(MessageSize == 1) %>%
+ggplot(aes(x = Processes, y = Latency, color = Allocation)) +
+  geom_line(linetype = 1) +
+  geom_point(size=1)+
+  geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+  annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+  scale_color_manual(values = c("#82CD47","#E67E22","#3498DB")) +
+  xlim(2, 48) +  # Adjust the x-axis limits as needed
+  labs(x = 'N. of processes (#cores)',
+       y = 'Latency',
+       title = 'Latency vs #cores (MessageSize=1 MPI_CHAR)',
+       color = 'Allocation')+
+  theme_light()
+```
+
+## Fix map allocation and compare different algorithms
+
+### Comparing Linear vs Chain
+
+As for now, let's focus on the comparison between Linear vs Chain
+
+```{r,echo=F}
+bcast.df %>% filter(MessageSize == 1)  %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Linear","Chain"))  %>%
+  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#E67E22","#3498DB")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Broadcast Latency vs #cores (MessageSize = 1)',
+         color = 'Algorithm')+
+    theme_light()
+```
+
+Difference is not particularly evident. BUT, if we now increase the size of the message, the different performances of the 2 algorithms will be highlighted:
+
+```{r,fig.width=16, fig.height=4,echo=F}
+Plots=list()
+sizes=c(64,256,2048)
+for(i in 1:length(sizes)){
+  # Filter by current size
+  current_plot<- bcast.df %>% filter(Allocation == "core") %>% filter(Algorithm %in% c("Linear","Chain"))  %>% filter(MessageSize == sizes[i]) %>%
+                  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+                          geom_line(linetype = 1) +
+                          geom_point(size=1)+
+                          geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+                          annotate("text",x=c(12,24),y=c(0,0),label=c("12 Cores","24 cores"),vjust=0,hjust=-0.1,color="#616A6B")+
+                          scale_color_manual(values = c("#E67E22","#3498DB")) +
+                          xlim(2,48) +  # Adjust the x-axis limits as needed
+                          labs(x = 'N. of processes (#cores)',
+                               y = expression('Latency (µs)'),
+                               title = paste0("Broadcast Latency vs #cores (MessageSize =",sizes[i],")"),
+                               color = 'Algorithm')+
+                          theme_light()
+  Plots[[i]]<- current_plot
+}
+
+Plots[[1]] | Plots[[2]] | Plots[[3]]
+```
+
+
+### Comparing all bcast algorithms
+
+Since allocation by core is associated to the lowest latency, let's fix Allocation to *core* and compare the algorithm behind the MPI broadcast operation. Considering a message size = 1 `MPI_CHAR` we obtain:
+
+```{r,fig.width=7, fig.height=4,echo=FALSE}
+bcast.df %>% filter(MessageSize == 1)  %>% filter(Allocation == "core") %>%
+  ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+    geom_line(linetype = 1) +
+    geom_point(size=1)+
+    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+    scale_color_manual(values = c("#27AE60","#E67E22","#8E44AD","#3498DB")) +
+    xlim(2, 48) +  # Adjust the x-axis limits as needed
+    labs(x = 'N. of processes (#cores)',
+         y = 'Latency',
+         title = 'Broadcast Latency vs #cores (MessageSize = 1)',
+         color = 'Algorithm')+
+    theme_light()
+```
+
+Instead, if we let the size vary we get something similar as seen in [Linear vs Chain](#comparing-linear-vs-chain)
+
+```{r,fig.width=16, fig.height=4,echo=F}
+Plots=list()
+sizes=c(64,256,2048)
+for(i in 1:length(sizes)){
+  # Filter by current size
+  current_plot<- bcast.df %>% filter(Allocation == "core") %>% filter(MessageSize == sizes[i]) %>%
+                    ggplot(aes(x = Processes, y = Latency, color = Algorithm)) +
+                    geom_line(linetype = 1) +
+                    geom_point(size=1)+
+                    geom_vline(xintercept = c(12, 24), linetype = "dashed", color = "#616A6B")+
+                    annotate("text", x = c(12,24), y = c(0,0), label = c("12 Cores","24 cores"), vjust = 0, hjust = -0.1,color="#616A6B")+
+                    scale_color_manual(values = c("#27AE60","#E67E22","#8E44AD","#3498DB")) +
+                    xlim(2, 48) +  # Adjust the x-axis limits as needed
+                    labs(x = 'N. of processes (#cores)',
+                         y = expression('Latency (µs)'),
+                         title = paste0("Broadcast Latency vs #cores (MessageSize =",sizes[i],")"),
+                         color = 'Algorithm')+
+                    theme_light()
+  Plots[[i]]<- current_plot
+}
+
+Plots[[1]] | Plots[[2]] | Plots[[3]]
+```
+
+
+## Performance Models
+
+Now we fix allocation to *core*, as it was the more performant allocation for all the algorithms. Our aim is to fit a performance model able to predict latency basing on data
+
+### Model for linear alg
+
+First of all, let's plot the variables to spot some relations:
+
+```{r,echo=F}
+bcast_linear.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~MessageSize,
+    y = ~Processes,
+    z = ~Latency
+  )%>%
+  add_markers(
+    marker = list(color = ~Latency,
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency"),
+    title = "Latency vs Processes for BinaryTree algorithm (Allocation='core')"
+  )
+```
+
+We can implement a simple linear model (it makes sense to remove the intercept)
+
+```{r}
+fit.linear<- lm(formula= Latency ~ -1+MessageSize+Processes,
+                data=bcast_linear.df %>% filter(Allocation == "core")
+                )
+summary(fit.linear)
+```
+
+Let's give a marginal look at our response variable:
+
+```{r,echo=F}
+hist(bcast_linear.df$Latency,breaks = 70,
+     xlab="Latency(us)",
+     main="Histogram of Latency (Linear Broadcast)")
+```
+
+EVIDENT SKEWNESS! Let's try to apply log2 transformation (in the model I will apply it both to Latency and MessageSize):
+
+```{r,echo=F}
+hist(log2(bcast_linear.df$Latency),breaks = 40,
+     xlab="log2(Latency(us))",
+     main="Histogram of log2 Latency (Linear Broadcast)")
+```
+
+
+```{r,echo=F}
+bcast_linear.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~log2(MessageSize),
+    y = ~Processes,
+    z = ~log2(Latency)
+  )%>%
+  add_markers(
+    marker = list(color = ~log2(Latency),
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency(µs)"),
+    title = "Latency vs Processes for Linear algorithm (Allocation='core')"
+  )
+```
+
+The linear model becomes:
+
+```{r}
+fit.linear.log<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize),
+                data=bcast_linear.df %>% filter(Allocation == "core")
+                )
+summary(fit.linear.log)
+```
+
+Adding a quadratic term for log2(MessageSize):
+
+```{r}
+fit.linear.log.quadratic<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize)+I(log2(MessageSize) ^2),
+                data=bcast_linear.df %>% filter(Allocation == "core")
+                )
+summary(fit.linear.log.quadratic)
+```
+
+**Comment:** I managed to increase the $R^2_{adj}$ from 0.8373 to 0.9757 :)
+
+### Model for chain alg
+
+```{r,echo=F}
+bcast_chain.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~log2(MessageSize),
+    y = ~Processes,
+    z = ~log2(Latency)
+  )%>%
+  add_markers(
+    marker = list(color = ~log2(Latency),
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency"),
+    title = "Latency vs Processes for chain algorithm (Allocation='core')"
+  )
+```
+
+```{r}
+fit.chain.log<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize),
+                data=bcast_chain.df %>% filter(Allocation == "core")
+                )
+summary(fit.chain.log)
+
+fit.chain.log.quadratic<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize)+I(log2(MessageSize)^2),
+                data=bcast_chain.df %>% filter(Allocation == "core")
+                )
+summary(fit.chain.log.quadratic)
+```
+
+### Model for binarytree alg
+
+```{r,echo=F}
+bcast_binarytree.df %>% 
+  filter(Allocation == "core") %>%
+  plot_ly(
+    x = ~log2(MessageSize),
+    y = ~Processes,
+    z = ~log2(Latency)
+  )%>%
+  add_markers(
+    marker = list(color = ~log2(Latency),
+                  line = list(color = "black",width = 0.8 ))
+  ) %>%
+  layout(
+    xaxis = list(title = "Processes"),
+    yaxis = list(title = "Latency"),
+    title = "Latency vs Processes for BinaryTree algorithm (Allocation='core')"
+  )
+```
+
+```{r}
+fit.binarytree.log<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize),
+                data=bcast_binarytree.df %>% filter(Allocation == "core")
+                )
+summary(fit.binarytree.log)
+
+fit.binarytree.log.quadratic<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize)+I(log2(MessageSize)^2),
+                data=bcast_binarytree.df %>% filter(Allocation == "core")
+                )
+summary(fit.binarytree.log.quadratic)
+```
+
+### Model for default alg
+```{r}
+fit.default.log<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize),
+                data=bcast_default.df %>% filter(Allocation == "core")
+                )
+summary(fit.default.log)
+
+fit.default.log.quadratic<- lm(formula= log2(Latency) ~ -1+Processes+log2(MessageSize)+I(log2(MessageSize)^2),
+                data=bcast_default.df %>% filter(Allocation == "core")
+                )
+summary(fit.default.log.quadratic)
+```
+
+
+# Regression plane plot
+
+I just propose an example for the linear algorithm
+
+## Log Model without quadratic term
+
+```{r,echo=F}
+data<- data.frame(
+  log2Latency=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(Latency)))),
+  Processes= as.numeric(unlist(bcast_linear.df %>% filter(Allocation == "core") %>% select(Processes))),
+  log2MessageSize=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(MessageSize))))
+)
+
+# Assuming fit.linear.log is the linear model you want to visualize
+
+# Your existing code for creating the scatter plot
+scatter <- data %>%
+  plot_ly(
+    x = ~log2MessageSize,
+    y = ~Processes,
+    z = ~log2Latency
+  ) %>%
+  add_markers(
+    marker = list(color = "#5d5e63",
+                  line = list(color = "black", width =0.5),
+                  opacity = 0.25)  # Adjust opacity for data points
+  ) %>%
+  layout(
+    title = "Latency vs Processes for Linear algorithm (Allocation='core')"
+  )
+
+# Create a meshgrid for x and y values
+x_values <- seq(min(data$log2MessageSize), max(data$log2MessageSize), length.out = 100)
+y_values <- seq(min(data$Processes), max(data$Processes), length.out = 100)
+meshgrid <- expand.grid(log2MessageSize = x_values, Processes = y_values)
+
+model<- lm(log2Latency~-1+Processes+log2MessageSize,data)
+# Predict the z values using the linear model
+z_values <- predict(model, newdata = meshgrid)
+
+# Reshape the predicted z values into a matrix
+z_matrix <- matrix(z_values, nrow = length(y_values), ncol = length(x_values), byrow = TRUE)
+
+# Add the regression plane to the scatter plot with lower opacity
+scatter <- scatter %>%
+  add_surface(
+    x = ~x_values,
+    y = ~y_values,
+    z = z_matrix,
+    colorscale = list(showscale = FALSE), # This hides the color scale legend
+    opacity = 1,  # Adjust opacity for the regression plane
+    name = 'Regression Plane'
+  )
+
+# Display the plot
+scatter
+```
+
+## Log Model with quadratic term
+
+```{r,echo=F}
+data<- data.frame(
+  log2Latency=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(Latency)))),
+  Processes= as.numeric(unlist(bcast_linear.df %>% filter(Allocation == "core") %>% select(Processes))),
+  log2MessageSize=as.numeric(unlist(log2(bcast_linear.df %>% filter(Allocation == "core") %>% select(MessageSize))))
+)
+
+# Assuming fit.linear.log is the linear model you want to visualize
+
+# Your existing code for creating the scatter plot
+scatter <- data %>%
+  plot_ly(
+    x = ~log2MessageSize,
+    y = ~Processes,
+    z = ~log2Latency
+  ) %>%
+  add_markers(
+    marker = list(color = "#5d5e63",
+                  line = list(color = "black", width =0.5),
+                  opacity = 0.25)  # Adjust opacity for data points
+  ) %>%
+  layout(
+    title = "Latency vs Processes for Linear algorithm (Allocation='core')"
+  )
+
+# Create a meshgrid for x and y values
+x_values <- seq(min(data$log2MessageSize), max(data$log2MessageSize), length.out = 100)
+y_values <- seq(min(data$Processes), max(data$Processes), length.out = 100)
+meshgrid <- expand.grid(log2MessageSize = x_values, Processes = y_values)
+
+model<- lm(log2Latency~-1+Processes+log2MessageSize+I(log2MessageSize^2),data) #+I(log2MessageSize^2)
+# Predict the z values using the linear model
+z_values <- predict(model, newdata = meshgrid)
+
+# Reshape the predicted z values into a matrix
+z_matrix <- matrix(z_values, nrow = length(y_values), ncol = length(x_values), byrow = TRUE)
+
+# Add the regression plane to the scatter plot with lower opacity
+scatter <- scatter %>%
+  add_surface(
+    x = ~x_values,
+    y = ~y_values,
+    z = z_matrix,
+    colorscale = list(showscale = FALSE), # This hides the color scale legend
+    opacity = 1,  # Adjust opacity for the regression plane
+    name = 'Regression Plane'
+  )
+
+# Display the plot
+scatter
+```
+
+
+
