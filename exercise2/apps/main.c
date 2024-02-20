@@ -93,7 +93,7 @@ int main(int argc, char** argv){
     
     if (rank == 0){
         if (global_check == n_processes){
-            printf("%d,%d,%f",n_processes,n_threads,time);
+            printf("%d,%d,%f\n",n_processes,n_threads,time);
             } else {
                 printf("The array has not been sorted correctly :(\n");
             }
