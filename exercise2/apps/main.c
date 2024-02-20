@@ -92,12 +92,11 @@ int main(int argc, char** argv){
     MPI_Reduce(&chunk_check, &global_check, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     
     if (rank == 0){
-        printf("\n");
-	if (global_check == n_processes){
-	    printf("%d,%d,%f",n_processes,n_threads,time);
-        } else {
-            printf("The array has not been sorted correctly :(\n");
-        }
+        if (global_check == n_processes){
+            printf("%d,%d,%f",n_processes,n_threads,time);
+            } else {
+                printf("The array has not been sorted correctly :(\n");
+            }
     }
     //.................................................................................................
     // (4) FINALIZATION 
@@ -106,8 +105,6 @@ int main(int argc, char** argv){
     free(data);
     MPI_Type_free(&MPI_DATA_T);
     MPI_Finalize();
-    //int finalize_retcode = MPI_Finalize();
-    //fprintf(stderr, "Process, return_code\n");
-    //fprintf(stderr, "%i, %i\n", rank, finalize_retcode);
+    //.................................................................................................
     return 0;
 }
