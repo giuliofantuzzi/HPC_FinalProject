@@ -1,0 +1,225 @@
+---
+title: "Quicksort Scalability"
+author: Giulio Fantuzzi
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(patchwork)
+```
+
+
+# OMP: original version vs L1-optimized version
+
+**NOTE** These data have been collected using a total size of $N=640.000.000$
+
+```{r,echo=F}
+omp_timings<- read.csv("../timings/omp_standard_640M.csv")
+omp_timings<- omp_timings%>%
+  group_by(Threads) %>%
+  summarise(Time = mean(Time, na.rm = TRUE))
+omp_timings$SpeedUp<- omp_timings$Time[1] / omp_timings$Time
+omp_timings$Type= "Standard"
+```
+
+
+```{r,echo=F}
+omp_timings_L1<- read.csv("../timings/omp_L1_640M.csv")
+omp_timings_L1<- omp_timings_L1%>%
+  group_by(Threads) %>%
+  summarise(Time = min(Time, na.rm = TRUE))
+omp_timings_L1$SpeedUp<- omp_timings_L1$Time[1] / omp_timings_L1$Time
+omp_timings_L1$Type= "L1 Optimized"
+```
+
+
+```{r,echo=F}
+omp.df<-  rbind(omp_timings,omp_timings_L1)
+omp.df$Type=as.factor(omp.df$Type)
+```
+
+Plot of the average sorting time vs number of threads:
+
+```{r,echo=FALSE,fig.width=8}
+omp.df %>%
+  ggplot(aes(x = Threads, y = Time, color = Type)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64), y = rep(0,6), label = c(2,4,8,16,32,64), 
+           vjust = 0, hjust = -0.1,color="grey50")+
+  geom_line() +
+  geom_point(size=2.3,col="black")+
+  geom_point(size=1.5)+
+  labs(title = "Time vs Threads (SIZE=640M data_t)",
+         x = "Threads",
+         y = "Time (s)") +
+    theme_minimal()
+```
+
+Speed-up vs number of threads:
+
+```{r,echo=FALSE,fig.width=8}
+omp.df %>%
+  ggplot(aes(x = Threads, y = SpeedUp, color = Type)) +
+  geom_point(size=2)+
+  geom_line() +
+  geom_vline(xintercept = c(2,4,8,16,32,64), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64), y = rep(0,6), label = c(2,4,8,16,32,64), 
+           vjust = 0, hjust = -0.1,color="grey")+
+  labs(title = "OMP SpeedUp",
+       x = "Threads",
+       y = "SpeedUp") +
+  ylim(0,10)+
+  theme_minimal()
+```
+
+# Hybrid code: strong scalability
+
+Given the time constraints on the ORFEO cluster I had to make 2 runs to get the data.
+
+First import the data regarding processes from 1 to 64:
+```{r}
+strong_1half.df<- read.csv("../timings/StrongScalability_160M_1-64.csv")
+strong_1half.df<- strong_1half.df %>% 
+                select(!Threads) %>%
+                group_by(Processes) %>%
+                summarise(Time = min(Time, na.rm = TRUE))
+```
+
+Then from 65 to 128:
+```{r}
+strong_2half.df<- read.csv("../timings/StrongScalability_160M_65-128.csv")
+strong_2half.df<- strong_2half.df %>% 
+                select(!Threads) %>%
+                group_by(Processes) %>%
+                summarise(Time = min(Time, na.rm = TRUE))
+```
+
+And we merge the 2 df:
+```{r}
+strong.df<- rbind(strong_1half.df,strong_2half.df)
+```
+
+To evaluate the strong scalability of the algorithm I fixed the size of the overall array to $160.000.000$ `size_t` and I measured the average sorting time by varying the number of MPI processes.
+
+
+```{r,echo=F}
+strong.df %>%
+  ggplot(aes(x = Processes, y = Time)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64,128), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64,128), y = rep(0,7), label = c(2,4,8,16,32,64,128), 
+           vjust = 0, hjust = -0.1,color="grey20")+
+  geom_line(col="orange3") +
+  geom_point(size=0.5)+
+    labs(title = "STRONG SCALABILITY: Time vs MPI Processes (Size=160M ; OMP_NUM_THREADS=4)",
+         x = "N. of MPI Processes",
+         y = "Time (s)") +
+    theme_minimal()
+```
+
+Notice how an odd number of processes influences negatively the sorting time:
+
+```{r,echo=F,fig.width=17,fig.height=7}
+p1<- strong.df %>%
+  ggplot(aes(x = Processes, y = Time)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64,128), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64,128), y = rep(0,7), label = c(2,4,8,16,32,64,128), 
+           vjust = 0, hjust = -0.1,color="grey20")+
+  geom_line(col="orange3") +
+  geom_point(size=0.7)+
+    labs(title = "STRONG SCALABILITY: both even and odd processes",
+         x = "N. of MPI Processes",
+         y = "Time (s)") +
+    theme_minimal()
+
+p2<- strong.df %>% filter((Processes%%2==0) | Processes==1) %>%
+  ggplot(aes(x = Processes, y = Time)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64,128), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64,128), y = rep(0,7), label = c(2,4,8,16,32,64,128), 
+           vjust = 0, hjust = -0.1,color="grey20")+
+  geom_line(col="orange3") +
+  geom_point(size=0.7)+
+    labs(title = "STRONG SCALABILITY: just even processes",
+         x = "N. of MPI Processes",
+         y = "Time (s)") +
+    theme_minimal()
+
+p1 | p2
+```
+
+**NOTE:** of course, for the powers of 2 the performance is the optimal!
+
+Strong scalability was considered also in terms of Speed-up:
+$$Sp(N,P)= \frac{T_s(N)}{T_P(N)}$$
+where $T_s(N)$ indicates the time to sort an array of size $N$ with the serial version of the algorithm, while $T_P(N)$ indicates the time to do the same with the parallelized version, run with $P$ processes
+
+```{r}
+strong.df$SpeedUp<- strong.df$Time[1] / strong.df$Time
+```
+
+
+```{r,echo=F,fig.width=10,message=FALSE,warning=F}
+strong.df %>%
+ggplot(aes(x = Processes, y = SpeedUp)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64,128), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64,128), y = rep(0,7), label = c(2,4,8,16,32,64,128),
+           vjust = 0, hjust = -0.1,color="grey20")+
+  geom_line(size=0.6,col="#74BD6B") +
+  geom_point(size=1)+
+  #geom_function(fun = function(x) log2(x)+1, linetype = "dashed", col = "red",size=0.6)+
+  labs(title = "STRONG SCALABILITY: Speed-up vs MPI Processes (Size=160M ; OMP_NUM_THREADS=4)",
+       x = "N. of MPI Processes",
+       y = "Speed-up") +
+  theme_minimal()
+```
+
+# Hybrid code: weak scalability
+
+To evaluate the weak scalability of the algorithm, instead, we let the overall size $N$ vary keeping the workload-per-process as a constant. In this case, I opted for a workload of $2.500.000$ `size_t`
+
+```{r}
+weak_1half.df<- read.csv("../timings/WeakScalability_160M_1-64.csv")
+weak_1half.df<- weak_1half.df %>% 
+                select(!Threads) %>%
+                group_by(Processes) %>%
+                summarise(Time = mean(Time, na.rm = TRUE))
+```
+
+```{r}
+weak_2half.df<- read.csv("../timings/WeakScalability_160M_65-128.csv")
+weak_2half.df<- weak_2half.df %>% 
+                select(!Threads) %>%
+                group_by(Processes) %>%
+                summarise(Time = mean(Time, na.rm = TRUE))
+```
+
+```{r}
+weak.df<- rbind(weak_1half.df,weak_2half.df)
+```
+
+```{r,fig.width=10,echo=F}
+weak.df %>% 
+  ggplot(aes(x = Processes, y = Time)) +
+  geom_vline(xintercept = c(2,4,8,16,32,64,128), linetype = "dashed", color = "grey")+
+  annotate("text", x = c(2,4,8,16,32,64,128), y = rep(0,7), label = c(2,4,8,16,32,64,128), 
+           vjust = 0.7, hjust = -0.3,color="grey50")+
+  geom_line(col="lightblue2") +
+  geom_hline(yintercept = weak.df$Time[1]*16,linetype="solid",color="navy",size=0.3)+
+  annotate("text", x = 115, y = 9, label = "16 times serial", color="navy")+
+  geom_hline(yintercept = weak.df$Time[1]*64,linetype="solid",color="red3",size=0.3)+
+  annotate("text", x = 100, y = 33, label = "128 times serial(worst-case-scenario)", color="red3")+
+  geom_point(size=0.6)+
+    labs(title = "WEAK SCALABILITY (Workload-per-process=2.5M ; OMP_NUM_THREADS=4)",
+         x = "N. of MPI processes",
+         y = "Time (s)") +
+    theme_minimal()
+```
+
