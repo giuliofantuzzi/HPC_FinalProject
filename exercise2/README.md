@@ -1,4 +1,5 @@
 # HPC Final Project: Exercise 2B
+For the task of the exercise, please refer to [task/exercise2.md](task/exercise2.md)
 
 ## Table of contents
 - [Project structure](#project-structure)
@@ -37,6 +38,9 @@
 │   ├── 📊 StrongScalability_160M_65-128.csv
 │   ├── 📊 WeakScalability_160M_1-64.csv
 │   └── 📊 WeakScalability_160M_65-128.csv
+│
+├── 📂 task/
+│   └── 📄 exercise2.md
 │
 ├── 🏗️ build.sh
 │
