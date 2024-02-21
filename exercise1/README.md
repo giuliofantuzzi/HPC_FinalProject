@@ -61,6 +61,9 @@
 │
 ├── 🏗️ compile_OSU-THIN.sh
 │
+├── 📂 report/
+│   └── 📝 FANTUZZI_ex1_report.pdf
+│
 └── 📰 README.md
 
 ```
@@ -93,7 +96,7 @@ The last step is to compile the library:
 
 ## Automatic Compilation (suggested)
 
-I provided you a bash script to compile the OSU library automatically on ORFEO: `compile_OSU-THIN.sh`. Just run it with:
+I provided you a bash script to compile the OSU library automatically on ORFEO: [`compile_OSU-THIN.sh`](./compile_OSU-THIN.sh). Just run it with:
 
 ```bash
 sbatch compile_OSU-THIN.sh
