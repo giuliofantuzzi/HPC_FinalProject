@@ -1,4 +1,4 @@
-#include "quicksort.h"
+#include "hybrid_qsort.h"
 
 int main(int argc, char** argv){
     //.................................................................................................
