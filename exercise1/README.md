@@ -1,6 +1,6 @@
 # HPC Final Project: Exercise 1
 
-For the task of the exercise, please refer to [task/exercise1.md](task/exercise1.md)
+For the task of the exercise, please refer to [`task/exercise1.md`](task/exercise1.md)
 
 ## Table of contents
 - [Project structure](#project-structure)
