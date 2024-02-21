@@ -17,12 +17,15 @@
 ├── 📂 include/
 │   └── 📄 hybrid_qsort.h
 │
-├── 📂 source/
-│   └── 📄 hybrid_qsort.c
+├── 📂 report/
+│   └── 📝 FANTUZZI_ex2_report.pdf
 │
 ├── 📂 scalability/
 │   ├── 🌐 scalability_analysis.html
 │   └── 🔎 scalability_analysis.Rmd
+│
+├── 📂 source/
+│   └── 📄 hybrid_qsort.c
 │
 ├── 📂 timings/
 │   ├── ⏳ getdata_omp.sh
