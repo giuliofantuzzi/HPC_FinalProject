@@ -28,7 +28,7 @@ done
 #--------------------------------------------------------------------------------
 # Step 2: benchmark hybrid version
 export OMP_NUM_THREADS=$OMP_threads
-for p in {65..128..1}
+for p in {1..128..1}
 do
     N=$((W*p))
     for iter in {1..5..1}
