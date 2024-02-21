@@ -21,7 +21,7 @@
 │   └── 📄 hybrid_qsort.c
 │
 ├── 📂 scalability/
-│   ├──  🌐 scalability_analysis.html
+│   ├── 🌐 scalability_analysis.html
 │   └── 🔎 scalability_analysis.Rmd
 │
 ├── 📂 timings/
