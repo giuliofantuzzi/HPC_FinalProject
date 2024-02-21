@@ -9,25 +9,32 @@
 📂 ex2B/
 │ 
 ├── 📂 apps/
-│   ├── 📄 main.c
-│   └── 📄 quick.c
+│   └── 📄 main.c
 │
 ├── 📂 include/
-│   └── 📄 quick_mpi.h
+│   └── 📄 hybrid_qsort.h
 │
 ├── 📂 source/
-│   └── 📄 quick_mpi.c
+│   └── 📄 hybrid_qsort.c
+│
+├── 📂 scalability/
+│   ├── 🌐 scalability_analysis.html
+│   └── 🔎 scalability_analysis.Rmd
 │
 ├── 📂 timings/
-│   ├── 📊 ...
-│   ├── 📊 ...
-│   ├── ⏳ omp_scaling.sh
-│   └── ⏳ mpi_scaling.sh
+│   ├── ⏳ getdata_omp.sh
+│   ├── ⏳ getdata_strong.sh
+│   ├── ⏳ getdata_weak.sh
+│   ├── 📊 omp_L1_640M.csv
+│   ├── 📊 omp_standard_640M.csv
+│   ├── 📊 StrongScalability_160M_1-64.csv
+│   ├── 📊 StrongScalability_160M_65-128.csv
+│   ├── 📊 WeakScalability_160M_1-64.csv
+│   └── 📊 WeakScalability_160M_65-128.csv
 │
 ├── 🏗️ build.sh
 │
 ├── 📝 CMakeLists.txt
 │
 └── 📰 README.md
-
 ```
