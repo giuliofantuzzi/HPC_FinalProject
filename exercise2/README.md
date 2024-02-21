@@ -64,7 +64,7 @@ make
 
 **Note**: this second way assumes that you've already installed `MPI` and `openMP` libraries on your pc!
 
-If the build phase was successfull (hopefully it should be 😅), you will find the executable [`apps/main.x`](apps/main.x) inside the folder [`apps/`](apps/)
+If the build phase was successful (hopefully it should be 😅), you will find the executable [`apps/main.x`](apps/main.x) inside the folder [`apps/`](apps/)
 
 ## How to run
 
