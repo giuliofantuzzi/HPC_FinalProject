@@ -1,5 +1,7 @@
 # HPC Final Project: Exercise 1
 
+For the task of the exercise, please refer to [task/exercise1.md](task/exercise1.md)
+
 ## Table of contents
 - [Project structure](#project-structure)
 - [Osu-micro-benchmarks 7.3 installation](#osu-micro-benchmarks-73-installation)
@@ -63,6 +65,9 @@
 │
 ├── 📂 report/
 │   └── 📝 FANTUZZI_ex1_report.pdf
+│
+├── 📂 task/
+│   └── 📄 exercise1.md
 │
 └── 📰 README.md
 
