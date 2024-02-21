@@ -3,7 +3,7 @@
 ## Table of contents
 - [Project structure](#project-structure)
 - [Osu-micro-benchmarks 7.3 installation](#osu-micro-benchmarks-73-installation)
-    - [Automatic compilation](#automatic-compilation)
+    - [Automatic compilation (suggested)](#automatic-compilation-suggested)
     - [Manual compilation](#manual-compilation)
 - [Data gathering](#data-gathering)
 
@@ -65,7 +65,15 @@
 
 ```
 
+⚠️  **<u>Note</u>** ⚠️ 
+
+When I was gathering data I hadn't already decided the barrier algorithms to analyze, so you'll find csv files and bash scripts regarding more than the requested algorithms. As you will find in my report, I analyzed the following algorithms:
+- linear, chain and tree for Broadcast;
+- linear, tree and Bruck for Barrier
+
 ## Osu-micro-benchmarks 7.3 installation
+
+To perform the benchmarks it is required to download the `osu-micro-benchmarks`.
 
 First of all, let's install the zipped file with the *wget* command:
 
@@ -73,17 +81,17 @@ First of all, let's install the zipped file with the *wget* command:
 wget https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
 ```
 
-Unzip the downloaded folder:
+Then, unzip the downloaded folder:
 
 ```bash
 tar -xzvf osu-micro-benchmarks-7.3.tar.gz
 ```
-The next step is to compile the library:
+The last step is to compile the library:
 
 - For the automatic compilation [click here](#automatic-compilation) 
 - For the manual compilation [skip here](#manual-compilation)
 
-## Automatic Compilation
+## Automatic Compilation (suggested)
 
 I provided you a bash script to compile the OSU library automatically on ORFEO: `compile_OSU-THIN.sh`. Just run it with:
 
@@ -91,7 +99,7 @@ I provided you a bash script to compile the OSU library automatically on ORFEO: 
 sbatch compile_OSU-THIN.sh
 ```
 
-**Note:** such compilation script is specifical for THIN nodes' architecture!
+**Note:** such compilation script is specifical for **THIN** nodes' architecture!
 
 ## Manual Compilation
 
@@ -122,9 +130,13 @@ which mpicxx #this returned me /opt/programs/openMPI/4.1.5/bin/mpicxx
 
 The entire data gathering process was automated by using some bash scripts, which were then submitted to the cluster using the **SLURM** workload manager, utilizing the *sbatch* command for streamlined execution.
 
-**Important Note:** <u> my personal choice</u> was to mantain separate folders and scripts for the different algorithms. In my opinion it was useful for being more flexible both in the data analysis phase and in the collection phase itself!
+**<u>Important Note:</u>** 
 
-**How to get data?** if you want to obtain data for an algorithm of one of the 2 collective operations, just move to the desired folder and run the provided script. 
+**My personal choice** was to mantain separate folders and scripts for the different algorithms. In my opinion it was useful for being more flexible both in the data analysis phase and in the collection phase itself!
+
+**<u>How to get data?</u>** 
+
+If you want to obtain data for an algorithm of one of the 2 collective operations, just move to the desired folder and run the provided script. 
 
 *Example(linear broadcast)*:
 ```bash
