@@ -2,5 +2,6 @@
 osu-micro-benchmarks-7.3.tar.gz
 osu-micro-benchmarks-7.3
 .Rhistory
+.vscode
 main.x
 build/
