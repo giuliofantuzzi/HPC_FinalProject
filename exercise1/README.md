@@ -95,7 +95,9 @@ sbatch compile_OSU-THIN.sh
 
 ## Manual Compilation
 
-Load openMPI module:
+Here the instructions to manually compile the library on your pc
+
+Initially, load openMPI module:
 
 ```bash
 module load openMPI/4.1.5/gnu
@@ -109,7 +111,7 @@ make
 make install
 ```
 
-**Note:** the paths above can be found with the *which* command:
+where the required paths can be found with:
 
 ```bash
 which mpicc  #this returned me /opt/programs/openMPI/4.1.5/bin/mpicc
