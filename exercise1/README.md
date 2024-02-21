@@ -67,7 +67,7 @@
 
 ⚠️  **<u>Note</u>** ⚠️ 
 
-When I was gathering data I hadn't already decided the barrier algorithms to analyze, so you'll find csv files and bash scripts regarding more than the requested algorithms. As you will find in my report, I analyzed the following algorithms:
+While gathering data, I had not yet decided on the barrier algorithms to analyze, so you'll find csv files and bash scripts regarding more than the requested algorithms. As you will find in my report, I analyzed the following algorithms (besides the default configuration):
 - linear, chain and tree for Broadcast;
 - linear, tree and Bruck for Barrier
 
