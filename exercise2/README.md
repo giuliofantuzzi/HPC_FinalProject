@@ -25,6 +25,9 @@ For the task of the exercise, please refer to [`task/exercise2.md`](task/exercis
 │   ├── 🌐 scalability_analysis.html
 │   └── 🔎 scalability_analysis.Rmd
 │
+├── 📂 slides/
+│   └── 📄 HPC_ex2_slides.pdf
+│
 ├── 📂 source/
 │   └── 📄 hybrid_qsort.c
 │
