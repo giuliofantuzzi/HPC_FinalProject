@@ -66,6 +66,9 @@ For the task of the exercise, please refer to [`task/exercise1.md`](task/exercis
 ├── 📂 report/
 │   └── 📝 FANTUZZI_ex1_report.pdf
 │
+├── 📂 slides/
+│   └── 📄 HPC_ex1_slides.pdf
+│
 ├── 📂 task/
 │   └── 📄 exercise1.md
 │
